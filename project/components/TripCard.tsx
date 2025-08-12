@@ -1,13 +1,29 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MapPin, Clock, Users, Star, ArrowRight } from 'lucide-react-native';
-import { Colors, Spacing, Typography } from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
+import { Spacing, Typography } from '@/constants/Spacing';
 import { Trip } from '@/types';
 
 interface TripCardProps {
   trip: Trip;
   onPress: () => void;
   showBidding?: boolean;
+}
+
+function getStatusBadgeStyle(status: string) {
+  switch (status.toLowerCase()) {
+    case 'open':
+      return styles.statusOpen;
+    case 'started':
+      return styles.statusStarted;
+    case 'completed':
+      return styles.statusCompleted;
+    case 'cancelled':
+      return styles.statusCancelled;
+    default:
+      return undefined;
+  }
 }
 
 export function TripCard({ trip, onPress, showBidding = false }: TripCardProps) {
@@ -102,7 +118,7 @@ export function TripCard({ trip, onPress, showBidding = false }: TripCardProps) 
       )}
 
       <View style={styles.statusContainer}>
-        <View style={[styles.statusBadge, styles[`status${trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}`]]}>
+        <View style={[styles.statusBadge, getStatusBadgeStyle(trip.status)]}>
           <Text style={styles.statusText}>{trip.status.toUpperCase()}</Text>
         </View>
       </View>

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { User as UserIcon, Star, Settings, FileText, LogOut, Car, Shield } from 'lucide-react-native';
-import { Colors, Spacing, Typography } from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
+import { Spacing, Typography } from '@/constants/Spacing';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProfileScreen() {

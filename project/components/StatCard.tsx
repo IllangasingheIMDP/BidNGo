@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Spacing, Typography } from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
+import { Spacing, Typography } from '@/constants/Spacing';
 
 interface StatCardProps {
   icon: React.ReactNode;

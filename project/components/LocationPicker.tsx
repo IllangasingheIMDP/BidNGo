@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, StyleSheet, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { X, MapPin, Search } from 'lucide-react-native';
-import { Colors, Spacing, Typography } from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
+import { Spacing, Typography } from '@/constants/Spacing';
 import { Location } from '@/types';
 
 interface LocationPickerProps {

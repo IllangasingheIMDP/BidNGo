@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, MapPin, DollarSign } from 'lucide-react-native';
-import { Colors, Spacing, Typography } from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
+import { Spacing, Typography } from '@/constants/Spacing';
 import { LocationPicker } from '@/components/LocationPicker';
 import { Trip, Location, Bid } from '@/types';
 import { apiService } from '@/services/api';
@@ -71,8 +72,8 @@ export default function PlaceBidScreen() {
     setSubmitting(true);
     try {
       await apiService.placeBid(trip.id, {
-        bid_price: price,
-        pickup_point: pickupPoint,
+  bid_price: price,
+  pickup_point: pickupPoint as any, // type assertion to avoid Location type mismatch
       });
 
       Alert.alert(
@@ -174,7 +175,7 @@ export default function PlaceBidScreen() {
             >
               <MapPin size={16} color={Colors.primary[600]} />
               <Text style={styles.locationButtonText} numberOfLines={2}>
-                {pickupPoint?.address || 'Select pickup location'}
+                {(pickupPoint as any)?.address || 'Select pickup location'}
               </Text>
             </TouchableOpacity>
           </View>
