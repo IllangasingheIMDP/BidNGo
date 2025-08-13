@@ -1,19 +1,25 @@
 import ballerina/http;
 
-service /api/trips on new http:Listener(8080) {
-
-    resource function post /{tripId}/bids(@http:Path {tripId: "tripId"} string tripId, @http:Payload {} json payload) returns json|error {
-        // TODO: Implement logic to create or update a bid for a specific trip
-        return { "message": "Bid creation/update endpoint not implemented yet" };
+service /api/bids on apiListener {
+    // Create/update a bid for a trip
+    resource function post trips/[string tripId](@http:Payload json payload) returns http:Response {
+        http:Response res = new;
+        res.setJsonPayload({ message: "Bid creation/update endpoint not implemented yet", tripId });
+        res.statusCode = 201;
+        return res;
     }
 
-    resource function get /{tripId}/bids(@http:Path {tripId: "tripId"} string tripId) returns json|error {
-        // TODO: Implement logic for driver to view bids for their trip
-        return { "message": "Bid view endpoint not implemented yet" };
+    // Get bids or bid summary for a trip
+    resource function get trips/[string tripId]() returns http:Response {
+        http:Response res = new;
+        res.setJsonPayload({ message: "Bid view endpoint not implemented yet", tripId });
+        return res;
     }
 
-    resource function post /{tripId}/bids/{bidId}/accept(@http:Path {tripId: "tripId", bidId: "bidId"} string tripId, string bidId) returns json|error {
-        // TODO: Implement logic for driver to accept a bid (critical transaction)
-        return { "message": "Bid accept endpoint not implemented yet" };
+    // Accept a bid
+    resource function post [string bidId]/accept() returns http:Response {
+        http:Response res = new;
+        res.setJsonPayload({ message: "Bid accept endpoint not implemented yet", bidId });
+        return res;
     }
 }

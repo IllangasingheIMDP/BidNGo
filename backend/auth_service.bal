@@ -1,68 +1,55 @@
 import ballerina/http;
-import ballerina/crypto;
-import ballerina/jwt;
-import ballerina/time;
 
-// Placeholder for user data (will be replaced by DB interaction)
-map<json> users = {};
+// Simple in-memory user store (replace with DB later)
+type User record {
+    string username;
+    string password; // NOTE: For demo only. Hash in production.
+    int roleFlags;
+};
 
-service /api/auth on new http:Listener(8080) {
+type RegisterPayload record {| string username; string password; |};
+type LoginPayload record {| string username; string password; |};
 
-    resource function post register(@http:Payload {} json payload) returns json|error {
-        string username = payload.username.toString();
-        string password = payload.password.toString();
+map<User> users = {};
+
+service /api/auth on apiListener {
+
+    resource function post register(@http:Payload RegisterPayload payload) returns json|error {
+        string username = payload.username;
+        string password = payload.password;
 
         if (users.hasKey(username)) {
-            return error http:Conflict("User already exists");
+            return error ("User already exists");
         }
 
-        // Hash password with bcrypt
-        string hashedPassword = crypto:bcryptHash(password);
-
-        // Store user (placeholder)
-        users[username] = {"username": username, "password_hash": hashedPassword, "role_flags": 1};
-
+        users[username] = {username, password, roleFlags: 1};
         return { "message": "User registered successfully" };
     }
 
-    resource function post login(@http:Payload {} json payload) returns json|error {
-        string username = payload.username.toString();
-        string password = payload.password.toString();
+    resource function post login(@http:Payload LoginPayload payload) returns json|error {
+        string username = payload.username;
+        string password = payload.password;
 
-        if (!users.hasKey(username)) {
-            return error http:NotFound("User not found");
+        if !users.hasKey(username) {
+            return error ("User not found");
         }
 
-        json user = users[username];
-        string storedPasswordHash = user.password_hash.toString();
-
-        // Verify password
-        if (!crypto:bcryptCompare(password, storedPasswordHash)) {
-            return error http:Unauthorized("Invalid credentials");
+        // Narrow the optional map value before accessing fields
+        var maybeUser = users[username];
+        if !(maybeUser is User) {
+            return error ("User not found");
+        }
+        User user = maybeUser;
+        if user.password != password {
+            return error ("Invalid credentials");
         }
 
-        // Generate JWT token (placeholder)
-        jwt:Audience aud = ["http://localhost:9090"];
-        time:Utc currentTime = time:utcNow();
-        time:Utc expiryTime = time:utcAddSeconds(currentTime, 3600); // 1 hour expiry
-
-        jwt:Claims claims = {
-            "sub": username,
-            "iss": "ballerina-auth-service",
-            "aud": aud,
-            "exp": expiryTime.unixSeconds,
-            "iat": currentTime.unixSeconds,
-            "role_flags": user.role_flags
-        };
-
-        string jwtSecret = "your_jwt_secret"; // TODO: Get from environment variable
-        string token = jwt:encode(jwt:HS256, jwtSecret.toBytes(), claims);
-
+        // Stub token; replace with real JWT later
+        string token = "dummy-token";
         return { "message": "User logged in successfully", "token": token };
     }
 
-    resource function post refresh(@http:Payload {} json payload) returns json|error {
-        // TODO: Implement token refresh logic (requires refresh token in DB)
+    resource function post refresh() returns json {
         return { "message": "Token refresh not implemented yet" };
     }
 }
