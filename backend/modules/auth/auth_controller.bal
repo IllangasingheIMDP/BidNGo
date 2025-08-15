@@ -22,16 +22,19 @@ type DBUser record {|
     string created_at;
     string updated_at;
 |};
-function hashPassword(string pw) returns string {
-
-    byte[] hashedBytes = crypto:hashSha256(pw.toBytes());
-    string|error hashedPassword = strings:fromBytes(hashedBytes);
+function hashPassword(string pw) returns string|error {
+    string|error hashedPassword = check crypto:hashBcrypt(pw,12);
+   
     if hashedPassword is error {
-        // Handle the unlikely error by returning an empty string or a custom value
-        return "";
+        return hashedPassword ;
     }
-    return hashedPassword; // stable ASCII string
+    return <string>hashedPassword;
 }
+function verifyPassword(string plain, string storedHash) returns boolean|error {
+    // If your Ballerina version does not have verifyBcrypt, try crypto:verifyPassword(plain, storedHash)
+    return crypto:verifyBcrypt(plain, storedHash);
+}
+
 // Secure login
 public function login(json data) returns json|error {
     string email = check data.email.ensureType(string);
@@ -50,13 +53,17 @@ public function login(json data) returns json|error {
     if result is () {
         return error("USER_NOT_FOUND");
     }
+    string|error test = hashPassword(password);
+ 
     DBUser dbUser = result.value;
 
     // Hash provided password and compare
     
-    string hashedPassword = hashPassword(password);
-
-    if hashedPassword != dbUser.password {
+    boolean|error ok = verifyPassword(password, dbUser.password);
+    if ok is error {
+        return ok;
+    }
+    if !ok {
         return error("INVALID_PASSWORD");
     }
     
@@ -89,7 +96,10 @@ public function register(json data) returns json|error {
     }
 
     // Hash password
-    string hashedPassword = hashPassword(user.password);
+    string|error hashedPassword = hashPassword(user.password);
+    if hashedPassword is error {
+        return hashedPassword;
+    }
     sql:ParameterizedQuery insert_query=`INSERT INTO users (name, phone, email, password)
          VALUES (${user.name}, ${user.phone}, ${user.email}, ${hashedPassword})`;
 

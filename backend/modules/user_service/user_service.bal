@@ -33,15 +33,13 @@ public http:Service UserService = @http:ServiceConfig {} service object {
     }
 
     // Get any user (self or admin)
-    resource function get [string email](http:Caller caller, http:Request req) returns error? {
+    resource function get user/[string email](http:Caller caller, http:Request req) returns error? {
         json|error auth = middleware:validateJWT(req);
         if auth is error {
             json errBody = { "error": auth.message() };
             check caller->respond(errBody);
             return;
         }
-        json body = check req.getJsonPayload();
-        string tokenEmail = check body.email.ensureType(string);
         
 
         json|error user = getUser(email);

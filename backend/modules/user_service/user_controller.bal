@@ -2,6 +2,7 @@ import backend.db;
 import ballerina/sql;
 import ballerina/crypto;
 import ballerina/lang.'string as strings;
+import ballerina/io;
 
 type DBUser record {|
     int id;
@@ -15,13 +16,19 @@ type DBUser record {|
     string updated_at;
 |};
 
-function hashPassword(string pw) returns string {
-    byte[] hashedBytes = crypto:hashSha256(pw.toBytes());
-    string|error hashedPassword = strings:fromBytes(hashedBytes);
+function hashPassword(string pw) returns string|error {
+    string|error hashedPassword = check crypto:hashBcrypt(pw,12);
+    
     if hashedPassword is error {
-        return "";
+        return hashedPassword ;
     }
-    return hashedPassword;
+    io:println("Hashed Password: ", <string>hashedPassword,"\n");
+    return <string>hashedPassword;
+}
+
+function verifyPassword(string plain, string storedHash) returns boolean|error {
+    // If your Ballerina version does not have verifyBcrypt, try crypto:verifyPassword(plain, storedHash)
+    return crypto:verifyBcrypt(plain, storedHash);
 }
 
 public function getUser(string email) returns DBUser|error {
@@ -66,14 +73,19 @@ public function updatePassword(string email, string currentPassword, string newP
     if strings:trim(currentPassword) == "" || strings:trim(newPassword) == "" {
         return error("PASSWORD_FIELDS_EMPTY");
     }
+    io:println("New hashed password: ", currentPassword);
+    io:println("current hashed password: ", newPassword);
     DBUser user = check getUser(email);
-    string currentHashed = hashPassword(currentPassword);
-    if currentHashed != user.password {
+    string currentHashed = check hashPassword(currentPassword);
+    boolean ok = check verifyPassword(currentPassword, user.password);
+    if !ok {
         return error("CURRENT_PASSWORD_INVALID");
     }
-    string newHashed = hashPassword(newPassword);
-    if newHashed == user.password {
-        return error("PASSWORD_SAME_AS_OLD");
+    string newHashed = check hashPassword(newPassword);
+
+    ok = check verifyPassword(newPassword, currentHashed);
+    if !ok {
+        return error("NEW_PASSWORD_INVALID");
     }
     sql:ExecutionResult res = check db:dbClient->execute(
         `UPDATE users SET password = ${newHashed}, updated_at = NOW() WHERE email = ${email}`
