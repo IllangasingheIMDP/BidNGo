@@ -3,7 +3,7 @@ import ballerina/sql;
 import ballerina/crypto;
 import ballerina/lang.'string as strings;
 import ballerina/io;
-
+import ballerina/jwt;
 type RegisterUser record {|
     string name;
     string phone;
@@ -59,8 +59,24 @@ public function login(json data) returns json|error {
     if hashedPassword != dbUser.password {
         return error("INVALID_PASSWORD");
     }
+    
+    jwt:IssuerConfig issuerConfig = {
+        
+        issuer: "BIDNGO",
+        audience: "users_bidngo",
+        expTime: 7d, // token expiry in seconds
+        
+        signatureConfig: {
+                    config: {
+                        keyFile: "private.key" // Path to your private key
+                    }
+                },
+                customClaims: { "role": "passenger","email":dbUser.email }
+            };
+    string token = check jwt:issue(issuerConfig);
 
-    return { message: "Logged in", token: "abc123" };
+
+    return { message: "Logged in Successfully", token: token };
 }
 
 // Secure registration
@@ -85,4 +101,31 @@ public function register(json data) returns json|error {
     }
 
     return error("REGISTRATION_FAILED");
+}
+
+public function getUserProfile(string email) returns json|error {
+    if strings:trim(email) == "" {
+        return error("EMAIL_MISSING");
+    }
+
+    stream<DBUser, error?> resultStream = db:dbClient->query(
+        `SELECT * FROM users WHERE email = ${email}`
+    );
+    record {DBUser value;}? result = check resultStream.next();
+    check resultStream.close();
+
+    if result is () {
+        return error("USER_NOT_FOUND");
+    }
+    DBUser dbUser = result.value;
+
+    return {
+        name: dbUser.name,
+        phone: dbUser.phone,
+        email: dbUser.email,
+        role_flags: dbUser.role_flags,
+        is_verified: dbUser.is_verified,
+        created_at: dbUser.created_at,
+        updated_at: dbUser.updated_at
+    };
 }

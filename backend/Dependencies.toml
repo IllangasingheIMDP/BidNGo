@@ -134,6 +134,9 @@ dependencies = [
 	{org = "ballerina", name = "log"},
 	{org = "ballerina", name = "time"}
 ]
+modules = [
+	{org = "ballerina", packageName = "jwt", moduleName = "jwt"}
+]
 
 [[package]]
 org = "ballerina"
@@ -373,6 +376,7 @@ dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "jwt"},
 	{org = "ballerina", name = "lang.string"},
 	{org = "ballerina", name = "sql"},
 	{org = "ballerina", name = "test"},
@@ -382,6 +386,7 @@ dependencies = [
 modules = [
 	{org = "dasun", packageName = "backend", moduleName = "backend"},
 	{org = "dasun", packageName = "backend", moduleName = "backend.auth"},
-	{org = "dasun", packageName = "backend", moduleName = "backend.db"}
+	{org = "dasun", packageName = "backend", moduleName = "backend.db"},
+	{org = "dasun", packageName = "backend", moduleName = "backend.middleware"}
 ]
 
