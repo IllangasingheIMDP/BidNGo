@@ -1,12 +1,12 @@
 import ballerina/http;
+import backend.auth as _;
 
-// Shared listeners for all services in this package
-listener http:Listener apiListener = new (8080);
-listener http:Listener healthListener = new (9090);
+// Health check endpoint on port 9090
+public listener  http:Listener healthListener = new (9090);
 
-// Simple health endpoint
+
 service / on healthListener {
-    resource function get ping() returns string {
+    resource function get .() returns string {
         return "OK";
     }
 }

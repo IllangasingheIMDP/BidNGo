@@ -1,7 +1,7 @@
 import ballerina/http;
 
 service /api/users on apiListener {
-    resource function get me() returns json|error {
+    resource function get .() returns json|error {
         return { "message": "User info endpoint not implemented yet" };
     }
 
