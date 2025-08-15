@@ -64,7 +64,7 @@ public function login(json data) returns json|error {
         
         issuer: "BIDNGO",
         audience: "users_bidngo",
-        expTime: 7d, // token expiry in seconds
+        expTime: 604800, // token expiry in seconds
         
         signatureConfig: {
                     config: {

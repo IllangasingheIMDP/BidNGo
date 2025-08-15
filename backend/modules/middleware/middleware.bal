@@ -11,13 +11,13 @@ public function validateJWT(http:Request req) returns json|error {
             issuer: "BIDNGO",
             audience: "users_bidngo",
             signatureConfig: {
-                certFile: "public.key" // path to your public key cert for signature validation
+                certFile: "public.cert" // path to your public key cert for signature validation
             }
         };
   // Validate the JWT token and get the payload
     jwt:Payload|error result = jwt:validate(token, valConfig);
     if result is error {
-        return error("JWT validation failed");
+        return result;
     }
     jwt:Payload payload = result;
 
