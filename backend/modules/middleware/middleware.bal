@@ -17,7 +17,7 @@ public function validateJWT(http:Request req) returns json|error {
   // Validate the JWT token and get the payload
     jwt:Payload|error result = jwt:validate(token, valConfig);
     if result is error {
-        return { "error": result.message() };
+        return error("JWT validation failed");
     }
     jwt:Payload payload = result;
 
@@ -25,5 +25,5 @@ public function validateJWT(http:Request req) returns json|error {
         // Access claims directly from the payload record
         string username = <string>payload["email"];
         string role = <string>payload["role"];
-        return { "email": username, "role": role };
+        return { email: username, role: role };
 }

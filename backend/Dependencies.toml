@@ -385,8 +385,16 @@ dependencies = [
 ]
 modules = [
 	{org = "dasun", packageName = "backend", moduleName = "backend"},
+	{org = "dasun", packageName = "backend", moduleName = "backend.admin_service"},
 	{org = "dasun", packageName = "backend", moduleName = "backend.auth"},
+	{org = "dasun", packageName = "backend", moduleName = "backend.bids_service"},
+	{org = "dasun", packageName = "backend", moduleName = "backend.booking_service"},
 	{org = "dasun", packageName = "backend", moduleName = "backend.db"},
-	{org = "dasun", packageName = "backend", moduleName = "backend.middleware"}
+	{org = "dasun", packageName = "backend", moduleName = "backend.driver_service"},
+	{org = "dasun", packageName = "backend", moduleName = "backend.middleware"},
+	{org = "dasun", packageName = "backend", moduleName = "backend.notification_service"},
+	{org = "dasun", packageName = "backend", moduleName = "backend.trips_service"},
+	{org = "dasun", packageName = "backend", moduleName = "backend.upload_service"},
+	{org = "dasun", packageName = "backend", moduleName = "backend.user_service"}
 ]
 
