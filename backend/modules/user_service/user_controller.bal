@@ -17,13 +17,7 @@ type DBUser record {|
 |};
 
 function hashPassword(string pw) returns string|error {
-    string|error hashedPassword = check crypto:hashBcrypt(pw,12);
-    
-    if hashedPassword is error {
-        return hashedPassword ;
-    }
-    io:println("Hashed Password: ", <string>hashedPassword,"\n");
-    return <string>hashedPassword;
+    return crypto:hashBcrypt(pw, workFactor=12);
 }
 
 function verifyPassword(string plain, string storedHash) returns boolean|error {
@@ -74,9 +68,10 @@ public function updatePassword(string email, string currentPassword, string newP
         return error("PASSWORD_FIELDS_EMPTY");
     }
     io:println("New hashed password: ", currentPassword);
-    io:println("current hashed password: ", newPassword);
+    
     DBUser user = check getUser(email);
     string currentHashed = check hashPassword(currentPassword);
+    io:println("current hashed password: ", currentHashed);
     boolean ok = check verifyPassword(currentPassword, user.password);
     if !ok {
         return error("CURRENT_PASSWORD_INVALID");
