@@ -3,7 +3,6 @@ import ballerina/time;
 import ballerina/crypto;
 import backend.middleware;
 import backend.db;
-import backend.user_service as users;
 import ballerina/lang.'string as strings;
 
 configurable string CLOUDINARY_API_KEY = ?;

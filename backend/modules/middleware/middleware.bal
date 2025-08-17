@@ -25,5 +25,6 @@ public function validateJWT(http:Request req) returns json|error {
         // Access claims directly from the payload record
         string username = <string>payload["email"];
         string role = <string>payload["role"];
-        return { email: username, role: role };
+        int id = <int>payload["id"];
+        return { email: username, role: role, id: id };
 }

@@ -10,6 +10,13 @@ type RegisterUser record {|
     string email;
     string password;
 |};
+type DriverProfileReq record {|
+    string nic_number;
+    string license_number;
+    string vehicle_reg_number;
+    string vehicle_model;
+    
+|};
 
 type DBUser record {|
     int id;
@@ -22,6 +29,7 @@ type DBUser record {|
     string created_at;
     string updated_at;
 |};
+
 function hashPassword(string pw) returns string|error {
     // DEV ONLY: insecure reversible encoding
     return pw.toBytes().toBase64();
@@ -75,7 +83,7 @@ public function login(json data) returns json|error {
                         keyFile: "private.key" // Path to your private key
                     }
                 },
-                customClaims: { "role": "passenger","email":dbUser.email,"id":dbUser.id }
+                customClaims: { "role": dbUser.role_flags == 1 ? "passenger" : "driver","email":dbUser.email,"id":dbUser.id }
             };
     string token = check jwt:issue(issuerConfig);
 
@@ -110,6 +118,54 @@ public function register(json data) returns json|error {
     return error("REGISTRATION_FAILED");
 }
 
+public function driver_register_as_user(json data) returns json|error {
+    RegisterUser user = check data.cloneWithType(RegisterUser);
+
+    if strings:trim(user.name) == "" || strings:trim(user.phone) == "" ||
+       strings:trim(user.email) == "" || strings:trim(user.password) == "" {
+        return error("MISSING_REQUIRED_FIELDS");
+    }
+
+    // Hash password
+    string|error hashedPassword = hashPassword(user.password);
+    if hashedPassword is error {
+        return hashedPassword;
+    }
+    sql:ParameterizedQuery insert_query=`INSERT INTO users (name, phone, email, password,role_flags)
+         VALUES (${user.name}, ${user.phone}, ${user.email}, ${hashedPassword},0)`;
+
+    sql:ExecutionResult result = check db:dbClient->execute(insert_query);
+    io:print("Inserted ${result.affectedRowCount} row(s)");
+
+    if result.affectedRowCount == 1 {
+        return { message: "User registered successfully" };
+    }
+
+    return error("REGISTRATION_FAILED");
+
+}
+
+public function complete_driver_registration(json data,int user_id) returns json|error {
+    DriverProfileReq req = check data.cloneWithType(DriverProfileReq);
+
+    if strings:trim(req.nic_number) == "" || strings:trim(req.license_number) == "" || strings:trim(req.vehicle_reg_number) == "" ||
+       strings:trim(req.vehicle_model) == "" {
+        return error("MISSING_REQUIRED_FIELDS");
+    }
+
+    sql:ParameterizedQuery insert_query=`insert into driver_profiles (user_id,nic_number, license_number, vehicle_reg_number, vehicle_model)
+         VALUES (${user_id}, ${req.nic_number}, ${req.license_number}, ${req.vehicle_reg_number}, ${req.vehicle_model})`;
+
+    sql:ExecutionResult result = check db:dbClient->execute(insert_query);
+    io:print("Updated ${result.affectedRowCount} row(s)");
+
+    if result.affectedRowCount == 1 {
+        return { message: "Driver registration completed successfully" };
+    }
+
+    return error("REGISTRATION_FAILED");
+}
+
 public function getUserProfile(string email) returns json|error {
     if strings:trim(email) == "" {
         return error("EMAIL_MISSING");
@@ -136,3 +192,4 @@ public function getUserProfile(string email) returns json|error {
         updated_at: dbUser.updated_at
     };
 }
+
