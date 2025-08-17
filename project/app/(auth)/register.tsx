@@ -14,13 +14,12 @@ export default function RegisterScreen() {
     first_name: '',
     last_name: '',
     phone: '',
-    role: 'passenger' as 'driver' | 'passenger',
   });
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
   const handleRegister = async () => {
-    const { email, password, confirmPassword, first_name, last_name, phone, role } = formData;
+    const { email, password, confirmPassword, first_name, last_name, phone } = formData;
 
     if (!email.trim() || !password.trim() || !first_name.trim() || !last_name.trim() || !phone.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
@@ -39,16 +38,17 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const response = await apiService.register({
+      await apiService.register({
         email: email.trim(),
         password,
         first_name: first_name.trim(),
         last_name: last_name.trim(),
         phone: phone.trim(),
-        role,
       });
 
-      await login(response.user, response.access_token, response.refresh_token);
+      // After successful registration, login automatically
+      const loginResponse = await apiService.login(email.trim(), password);
+      await login(loginResponse.token);
       router.replace('/(tabs)');
     } catch (error) {
       Alert.alert('Registration Failed', error instanceof Error ? error.message : 'An error occurred');
@@ -72,40 +72,6 @@ export default function RegisterScreen() {
           <Text style={styles.subtitle}>Join the RideShare community</Text>
 
           <View style={styles.form}>
-            <View style={styles.roleSelector}>
-              <Text style={styles.label}>I want to</Text>
-              <View style={styles.roleButtons}>
-                <TouchableOpacity
-                  style={[
-                    styles.roleButton,
-                    formData.role === 'passenger' && styles.roleButtonActive
-                  ]}
-                  onPress={() => updateField('role', 'passenger')}
-                >
-                  <Text style={[
-                    styles.roleButtonText,
-                    formData.role === 'passenger' && styles.roleButtonTextActive
-                  ]}>
-                    Find Rides
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.roleButton,
-                    formData.role === 'driver' && styles.roleButtonActive
-                  ]}
-                  onPress={() => updateField('role', 'driver')}
-                >
-                  <Text style={[
-                    styles.roleButtonText,
-                    formData.role === 'driver' && styles.roleButtonTextActive
-                  ]}>
-                    Offer Rides
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
             <View style={styles.nameRow}>
               <View style={styles.nameInput}>
                 <Text style={styles.label}>First Name</Text>
@@ -232,34 +198,6 @@ const styles = StyleSheet.create({
   },
   form: {
     marginBottom: Spacing.xl,
-  },
-  roleSelector: {
-    marginBottom: Spacing.lg,
-  },
-  roleButtons: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  roleButton: {
-    flex: 1,
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.neutral[200],
-    borderRadius: 8,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-  },
-  roleButtonActive: {
-    backgroundColor: Colors.primary[600],
-    borderColor: Colors.primary[600],
-  },
-  roleButtonText: {
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Medium',
-    color: Colors.neutral[700],
-  },
-  roleButtonTextActive: {
-    color: Colors.white,
   },
   nameRow: {
     flexDirection: 'row',

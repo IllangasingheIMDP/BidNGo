@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
-import { User as UserIcon, Star, Settings, FileText, LogOut, MapPin, CreditCard, Car, Shield, DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react-native';
+import { Car, Shield, Star, Settings, FileText, LogOut, DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { Spacing, Typography } from '@/constants/Spacing';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService, DriverProfile } from '@/services/api';
 
-export default function ProfileScreen() {
+export default function DriverProfileScreen() {
   const { user, logout } = useAuth();
   const [driverProfile, setDriverProfile] = useState<DriverProfile | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   if (!user) {
@@ -18,18 +18,17 @@ export default function ProfileScreen() {
     return null;
   }
 
-  const isDriver = user.role === 'driver';
+  // Redirect passengers to their profile
+  if (user.role === 'passenger') {
+    router.replace('/(tabs)/profile');
+    return null;
+  }
 
   useEffect(() => {
-    if (isDriver) {
-      loadDriverProfile();
-    }
-  }, [isDriver]);
+    loadDriverProfile();
+  }, []);
 
   const loadDriverProfile = async () => {
-    if (!isDriver) return;
-    
-    setLoading(true);
     try {
       const profile = await apiService.getMyDriverProfile();
       setDriverProfile(profile);
@@ -43,9 +42,7 @@ export default function ProfileScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    if (isDriver) {
-      await loadDriverProfile();
-    }
+    await loadDriverProfile();
     setRefreshing(false);
   };
 
@@ -96,40 +93,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const passengerMenuItems = [
-    {
-      icon: <Settings size={20} color={Colors.neutral[600]} />,
-      title: 'Account Settings',
-      subtitle: 'Update your profile information',
-      onPress: () => {}, // TODO: Implement settings screen
-    },
-    {
-      icon: <MapPin size={20} color={Colors.primary[600]} />,
-      title: 'Saved Places',
-      subtitle: 'Manage your favorite locations',
-      onPress: () => {}, // TODO: Implement saved places
-    },
-    {
-      icon: <FileText size={20} color={Colors.secondary[600]} />,
-      title: 'Trip History',
-      subtitle: 'View your completed trips and bookings',
-      onPress: () => {}, // TODO: Implement trip history
-    },
-    {
-      icon: <CreditCard size={20} color={Colors.accent[600]} />,
-      title: 'Payment Methods',
-      subtitle: 'Manage your payment options',
-      onPress: () => {}, // TODO: Implement payment methods
-    },
-    {
-      icon: <LogOut size={20} color={Colors.error[600]} />,
-      title: 'Sign Out',
-      subtitle: 'Sign out of your account',
-      onPress: handleLogout,
-      destructive: true,
-    },
-  ];
-
   const driverMenuItems = [
     {
       icon: <Settings size={20} color={Colors.neutral[600]} />,
@@ -164,8 +127,6 @@ export default function ProfileScreen() {
     },
   ];
 
-  const menuItems = isDriver ? driverMenuItems : passengerMenuItems;
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -186,19 +147,19 @@ export default function ProfileScreen() {
         <View style={styles.profileSection}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
-              {getInitials(user.name || (isDriver ? 'D' : 'P'))}
+              {getInitials(user.name || 'D')}
             </Text>
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
-              {user.name || (isDriver ? 'Driver' : 'Passenger')}
+              {user.name || 'Driver'}
             </Text>
             <Text style={styles.userEmail}>{user.email}</Text>
             <View style={styles.roleContainer}>
-              <Text style={[styles.roleText, isDriver && styles.driverRole]}>
-                {isDriver ? 'Driver' : 'Passenger'}
+              <Text style={styles.driverRole}>
+                Driver
               </Text>
-              {isDriver && driverProfile && (
+              {driverProfile && (
                 <View style={[styles.verificationBadge, { backgroundColor: `${getVerificationStatusColor(driverProfile.verificationStatus)}20` }]}>
                   {getVerificationStatusIcon(driverProfile.verificationStatus)}
                   <Text style={[styles.verificationText, { color: getVerificationStatusColor(driverProfile.verificationStatus) }]}>
@@ -210,30 +171,22 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {isDriver && driverProfile ? (
-          <View style={styles.ratingContainer}>
+        {driverProfile ? (
+          <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Star size={16} color={Colors.accent[500]} fill={Colors.accent[500]} />
               <Text style={styles.ratingText}>{(user.rating || 0).toFixed(1)}</Text>
               <Text style={styles.ratingLabel}>rating</Text>
             </View>
           </View>
-        ) : isDriver && !driverProfile ? (
+        ) : (
           <TouchableOpacity style={styles.completeProfileButton} onPress={handleCompleteProfile}>
             <Text style={styles.completeProfileText}>Complete Profile</Text>
           </TouchableOpacity>
-        ) : (
-          <View style={styles.ratingContainer}>
-            <View style={styles.statItem}>
-              <Star size={16} color={Colors.accent[500]} fill={Colors.accent[500]} />
-              <Text style={styles.ratingText}>{(user.rating || 0).toFixed(1)}</Text>
-              <Text style={styles.ratingLabel}>rating</Text>
-            </View>
-          </View>
         )}
       </View>
 
-      {isDriver && driverProfile && (
+      {driverProfile && (
         <View style={styles.vehicleCard}>
           <Text style={styles.vehicleTitle}>Vehicle Information</Text>
           <View style={styles.vehicleInfo}>
@@ -245,8 +198,8 @@ export default function ProfileScreen() {
       )}
 
       <View style={styles.menu}>
-        <Text style={styles.menuTitle}>{isDriver ? 'Driver Services' : 'Account'}</Text>
-        {menuItems.map((item, index) => (
+        <Text style={styles.menuTitle}>Driver Services</Text>
+        {driverMenuItems.map((item, index) => (
           <TouchableOpacity
             key={index}
             style={[styles.menuItem, item.destructive && styles.destructiveItem]}
@@ -318,18 +271,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
-  roleText: {
+  driverRole: {
     fontSize: Typography.sizes.xs,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[700],
-    backgroundColor: Colors.neutral[100],
+    backgroundColor: Colors.primary[100],
+    color: Colors.primary[700],
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: 4,
-  },
-  driverRole: {
-    backgroundColor: Colors.primary[100],
-    color: Colors.primary[700],
   },
   verificationBadge: {
     flexDirection: 'row',
@@ -342,6 +291,24 @@ const styles = StyleSheet.create({
   verificationText: {
     fontSize: Typography.sizes.xs,
     fontFamily: 'Inter-Bold',
+  },
+  statsContainer: {
+    alignItems: 'center',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: Typography.sizes.lg,
+    fontFamily: 'Inter-Bold',
+    color: Colors.neutral[900],
+  },
+  ratingLabel: {
+    fontSize: Typography.sizes.sm,
+    fontFamily: 'Inter-Regular',
+    color: Colors.neutral[600],
   },
   completeProfileButton: {
     backgroundColor: Colors.primary[600],
@@ -387,41 +354,6 @@ const styles = StyleSheet.create({
     color: Colors.neutral[600],
   },
   licenseNumber: {
-    fontSize: Typography.sizes.sm,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.success[100],
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 4,
-    gap: 4,
-  },
-  verifiedText: {
-    fontSize: Typography.sizes.xs,
-    fontFamily: 'Inter-Bold',
-    color: Colors.success[700],
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingText: {
-    fontSize: Typography.sizes.lg,
-    fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
-  },
-  ratingLabel: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
     color: Colors.neutral[600],

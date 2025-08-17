@@ -5,7 +5,7 @@ import { Search, MapPin, Clock, TrendingUp } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { Spacing, Typography } from '@/constants/Spacing';
 import { useAuth } from '@/contexts/AuthContext';
-import { TripCard } from '@/components/TripCard';
+
 import { QuickSearchCard } from '@/components/QuickSearchCard';
 import { Trip } from '@/types';
 import { apiService } from '@/services/api';
@@ -32,7 +32,7 @@ export default function HomeScreen() {
         destination: { lat: 7.2906, lng: 80.6337, address: 'Kandy' },
         date: new Date().toISOString().split('T')[0],
       });
-      setRecentTrips(trips.slice(0, 3));
+      
     } catch (error) {
       console.error('Failed to load recent trips:', error);
     } finally {
@@ -59,7 +59,7 @@ export default function HomeScreen() {
     >
       <View style={styles.header}>
         <Text style={styles.greeting}>
-          Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.first_name}!
+          Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.name}!
         </Text>
         <Text style={styles.subtitle}>Where would you like to go today?</Text>
       </View>
@@ -92,28 +92,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {loading ? (
-          <View style={styles.loadingState}>
-            <Text style={styles.loadingText}>Loading trips...</Text>
-          </View>
-        ) : recentTrips.length > 0 ? (
-          recentTrips.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={trip}
-              onPress={() => router.push(`/trip/${trip.id}`)}
-              showBidding={user?.role === 'passenger'}
-            />
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <TrendingUp size={48} color={Colors.neutral[400]} />
-            <Text style={styles.emptyTitle}>No trips available</Text>
-            <Text style={styles.emptySubtitle}>
-              Start by searching for your route or check back later
-            </Text>
-          </View>
-        )}
+        
       </View>
     </ScrollView>
   );

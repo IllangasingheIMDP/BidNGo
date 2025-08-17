@@ -5,7 +5,7 @@ import { Plus, Car, Calendar, DollarSign, Users } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { Spacing, Typography } from '@/constants/Spacing';
 import { useAuth } from '@/contexts/AuthContext';
-import { TripCard } from '@/components/TripCard';
+
 import { StatCard } from '@/components/StatCard';
 import { Trip } from '@/types';
 import { apiService } from '@/services/api';
@@ -33,7 +33,7 @@ export default function DriverScreen() {
   const loadMyTrips = async () => {
     try {
       const trips = await apiService.getMyTrips();
-      setMyTrips(trips);
+     
     } catch (error) {
       console.error('Failed to load trips:', error);
     } finally {
@@ -97,7 +97,7 @@ export default function DriverScreen() {
         <StatCard
           icon={<Users size={24} color={Colors.secondary[600]} />}
           title="Earnings"
-          value={`LKR ${stats.totalEarnings.toLocaleString()}`}
+          value={`LKR`}
           subtitle="This month"
         />
       </View>
@@ -114,15 +114,6 @@ export default function DriverScreen() {
           <View style={styles.loadingState}>
             <Text style={styles.loadingText}>Loading your trips...</Text>
           </View>
-        ) : myTrips.length > 0 ? (
-          myTrips.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={trip}
-              onPress={() => router.push(`/driver/trip/${trip.id}`)}
-              showBidding={true}
-            />
-          ))
         ) : (
           <View style={styles.emptyState}>
             <Car size={48} color={Colors.neutral[400]} />

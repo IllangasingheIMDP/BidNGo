@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Search, MapPin, Calendar, Filter, ArrowUpDown } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { Spacing, Typography } from '@/constants/Spacing';
-import { TripCard } from '@/components/TripCard';
+
 import { LocationPicker } from '@/components/LocationPicker';
 import { DatePicker } from '@/components/DatePicker';
 import { Trip, SearchFilters, Location } from '@/types';
@@ -61,7 +61,7 @@ export default function SearchScreen() {
     setLoading(true);
     try {
       const results = await apiService.searchTrips(searchFilters);
-      setTrips(results);
+      
     } catch (error) {
       Alert.alert('Search Failed', 'Unable to search trips. Please try again.');
       console.error('Search error:', error);
@@ -181,20 +181,6 @@ export default function SearchScreen() {
           <View style={styles.loadingState}>
             <Text style={styles.loadingText}>Searching for trips...</Text>
           </View>
-        ) : trips.length > 0 ? (
-          <>
-            <Text style={styles.resultsHeader}>
-              {trips.length} trip{trips.length !== 1 ? 's' : ''} found
-            </Text>
-            {trips.map((trip) => (
-              <TripCard
-                key={trip.id}
-                trip={trip}
-                onPress={() => router.push(`/trip/${trip.id}`)}
-                showBidding={user?.role === 'passenger'}
-              />
-            ))}
-          </>
         ) : (
           <View style={styles.emptyState}>
             <Search size={48} color={Colors.neutral[400]} />

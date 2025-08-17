@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MapPin, Clock, Users, Star, CreditCard } from 'lucide-react-native';
-import { Colors, Spacing, Typography } from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
+import { Spacing, Typography } from '@/constants/Spacing';
 import { Booking } from '@/types';
 
 interface BookingCardProps {
@@ -58,16 +59,16 @@ export function BookingCard({ booking, onPress }: BookingCardProps) {
       <View style={styles.driverInfo}>
         <View style={styles.driverAvatar}>
           <Text style={styles.driverInitial}>
-            {booking.driver.first_name.charAt(0)}
+            {(booking.driver.name || 'D').charAt(0)}
           </Text>
         </View>
         <View style={styles.driverDetails}>
           <Text style={styles.driverName}>
-            {booking.driver.first_name} {booking.driver.last_name}
+            {booking.driver.name || ''}
           </Text>
           <View style={styles.ratingContainer}>
             <Star size={14} color={Colors.accent[500]} fill={Colors.accent[500]} />
-            <Text style={styles.rating}>{booking.driver.rating.toFixed(1)}</Text>
+            <Text style={styles.rating}>{(booking.driver.rating || 0).toFixed(1)}</Text>
           </View>
         </View>
         <View style={styles.fareContainer}>

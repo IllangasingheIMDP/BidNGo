@@ -21,7 +21,9 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const response = await apiService.login(email.trim(), password);
-      await login(response.user, response.access_token, response.refresh_token);
+      const userData = await login(response.token);
+      
+      // Navigate to tabs - role-based routing will happen within the profile tab
       router.replace('/(tabs)');
     } catch (error) {
       Alert.alert('Login Failed', error instanceof Error ? error.message : 'An error occurred');
@@ -75,7 +77,7 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
 
-          <Link href="/forgot-password" asChild>
+          <Link href="/(auth)/register" asChild>
             <TouchableOpacity style={styles.forgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -84,7 +86,7 @@ export default function LoginScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
-          <Link href="/register" asChild>
+          <Link href="/(auth)/register" asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Sign Up</Text>
             </TouchableOpacity>

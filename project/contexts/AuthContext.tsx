@@ -5,7 +5,7 @@ import { authService } from '@/services/auth';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (user: User, accessToken: string, refreshToken: string) => Promise<void>;
+  login: (token: string) => Promise<User | null>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
 }
@@ -34,9 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (userData: User, accessToken: string, refreshToken: string) => {
-    await authService.saveAuthData(userData, accessToken, refreshToken);
+  const login = async (token: string) => {
+    await authService.saveToken(token);
+    const userData = await authService.getUser();
     setUser(userData);
+    return userData; // Return user data for role-based navigation
   };
 
   const logout = async () => {

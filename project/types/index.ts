@@ -1,14 +1,14 @@
 export interface User {
   id: string;
   email: string;
-  first_name: string;
-  last_name: string;
-  phone: string;
   role: 'driver' | 'passenger';
-  rating: number;
+  name?: string;
+ 
+  phone?: string;
+  rating?: number;
   avatar_url?: string;
-  is_verified: boolean;
-  created_at: string;
+  is_verified?: boolean;
+  created_at?: string;
 }
 
 export interface Driver extends User {
@@ -99,9 +99,8 @@ export interface Rating {
 }
 
 export interface AuthResponse {
-  user: User;
-  access_token: string;
-  refresh_token: string;
+  message: string;
+  token: string;
 }
 
 export interface SearchFilters {
