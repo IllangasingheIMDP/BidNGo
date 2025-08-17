@@ -5,6 +5,7 @@ import backend.middleware;
 import backend.db;
 import ballerina/lang.'string as strings;
 
+
 configurable string CLOUDINARY_API_KEY = ?;
 configurable string CLOUDINARY_API_SECRET = ?;
 configurable string CLOUDINARY_CLOUD_NAME = ?;
@@ -26,6 +27,41 @@ type DriverProfileResp record {|
     string[] doc_urls;
     string verification_status;
 |};
+
+// Manual validator to avoid opaque {ballerina/lang.value}ConversionError
+function validateDriverProfile(json payload) returns DriverProfileReq|error {
+    if payload is map<json> {
+        map<json> obj = payload;
+        function(string key) returns string|error fetchStr = function(string key) returns string|error {
+            if !obj.hasKey(key) { return error("MISSING_FIELD_" + key.toUpperAscii()); }
+            json v = obj[key];
+            if v is string {
+                if strings:trim(v) == "" { return error("EMPTY_FIELD_" + key.toUpperAscii()); }
+                return v;
+            }
+            return error("INVALID_TYPE_" + key.toUpperAscii());
+        };
+        string nic = check fetchStr("nic_number");
+        string lic = check fetchStr("license_number");
+        string vehReg = check fetchStr("vehicle_reg_number");
+        string vehModel = check fetchStr("vehicle_model");
+        if !obj.hasKey("doc_urls") { return error("MISSING_FIELD_DOCUMENTS"); }
+        json docsJ = obj["doc_urls"];
+        if docsJ is json[] {
+            string[] docs = [];
+            foreach var d in docsJ {
+                if d is string {
+                    if strings:trim(d) == "" { return error("EMPTY_DOCUMENT_ENTRY"); }
+                    docs.push(d);
+                } else { return error("INVALID_DOCUMENT_ENTRY_TYPE"); }
+            }
+            if docs.length() == 0 { return error("NO_DOCUMENTS"); }
+            return { nic_number: nic, license_number: lic, vehicle_reg_number: vehReg, vehicle_model: vehModel, documents: docs };
+        }
+        return error("INVALID_TYPE_DOCUMENTS");
+    }
+    return error("INVALID_JSON_OBJECT");
+}
 
 function uploadToCloudinary(string fileData) returns string|error {
     if CLOUDINARY_API_KEY == "" || CLOUDINARY_API_SECRET == "" || CLOUDINARY_CLOUD_NAME == "" {
@@ -126,8 +162,9 @@ public http:Service UploadService = @http:ServiceConfig {} service object {
             check caller->respond({ "error": "BAD_REQUEST", detail: rawPayload.message() });
             return;
         }
-        DriverProfileReq|error body = rawPayload.cloneWithType(DriverProfileReq);
+        DriverProfileReq|error body = validateDriverProfile(rawPayload);
         if body is error {
+           
             check caller->respond({ "error": "BAD_REQUEST", detail: body.message() });
             return;
         }
