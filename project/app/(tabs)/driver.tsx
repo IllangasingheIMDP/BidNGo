@@ -69,7 +69,7 @@ export default function DriverScreen() {
         <Text style={styles.title}>Driver Dashboard</Text>
         <TouchableOpacity 
           style={styles.createButton}
-          onPress={() => router.push('/create-trip')}
+          onPress={() => router.push('/driver/trip-creation')}
         >
           <Plus size={20} color={Colors.white} />
         </TouchableOpacity>
@@ -105,7 +105,7 @@ export default function DriverScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>My Trips</Text>
-          <TouchableOpacity onPress={() => router.push('/create-trip')}>
+          <TouchableOpacity onPress={() => router.push('/driver/trip-creation')}>
             <Text style={styles.createNew}>+ New Trip</Text>
           </TouchableOpacity>
         </View>
@@ -123,7 +123,7 @@ export default function DriverScreen() {
             </Text>
             <TouchableOpacity 
               style={styles.emptyButton}
-              onPress={() => router.push('/create-trip')}
+              onPress={() => router.push('/driver/trip-creation')}
             >
               <Text style={styles.emptyButtonText}>Post a Trip</Text>
             </TouchableOpacity>

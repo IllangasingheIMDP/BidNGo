@@ -61,12 +61,11 @@ export default function HomeScreen() {
   };
 
   const navigateToSearch = () => {
-    router.push('/search');
+    router.push('/(tabs)/bookings'); // Navigate to bookings as search placeholder
   };
 
   const navigateToCreateTrip = () => {
-    // TODO: Create trip creation screen
-    router.push('/(tabs)/driver');
+    router.push('/driver/trip-creation');
   };
 
   // Driver Home Screen
@@ -99,17 +98,11 @@ export default function HomeScreen() {
             <View style={styles.statIconContainer}>
               <Car size={20} color={Colors.primary[600]} />
             </View>
-            <Text style={styles.statValue}>{myTrips.length}</Text>
+            <Text style={styles.statValue}>{(myTrips || []).length}</Text>
             <Text style={styles.statLabel}>Active Trips</Text>
           </View>
           
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Users size={20} color={Colors.secondary[600]} />
-            </View>
-            <Text style={styles.statValue}>{myBookings.length}</Text>
-            <Text style={styles.statLabel}>Total Bookings</Text>
-          </View>
+          
           
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
@@ -118,16 +111,18 @@ export default function HomeScreen() {
             <Text style={styles.statValue}>{(user?.rating || 0).toFixed(1)}</Text>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
-          
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <DollarSign size={20} color={Colors.success[600]} />
+
+          {/* {myBookings && (
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <DollarSign size={20} color={Colors.success[600]} />
+              </View>
+              <Text style={styles.statValue}>
+                ${(myBookings || []).reduce((sum, booking) => sum + booking.fare, 0).toFixed(0)}
+              </Text>
+              <Text style={styles.statLabel}>Earnings</Text>
             </View>
-            <Text style={styles.statValue}>
-              ${myBookings.reduce((sum, booking) => sum + booking.fare, 0).toFixed(0)}
-            </Text>
-            <Text style={styles.statLabel}>Earnings</Text>
-          </View>
+          )} */}
         </View>
 
         {/* Recent Trips Section */}
@@ -143,7 +138,7 @@ export default function HomeScreen() {
             <View style={styles.loadingState}>
               <Text style={styles.loadingText}>Loading your trips...</Text>
             </View>
-          ) : myTrips.length === 0 ? (
+          ) : (myTrips || []).length === 0 ? (
             <View style={styles.emptyState}>
               <Car size={48} color={Colors.neutral[400]} />
               <Text style={styles.emptyTitle}>No trips yet</Text>
@@ -154,7 +149,7 @@ export default function HomeScreen() {
             </View>
           ) : (
             <View style={styles.tripsList}>
-              {myTrips.slice(0, 2).map((trip) => (
+              {(myTrips || []).slice(0, 2).map((trip) => (
                 <View key={trip.id} style={styles.tripCard}>
                   <View style={styles.tripHeader}>
                     <Text style={styles.tripRoute}>
@@ -201,18 +196,18 @@ export default function HomeScreen() {
           icon={<MapPin size={24} color={Colors.primary[600]} />}
           title="Popular Routes"
           subtitle="Colombo ↔ Kandy"
-          onPress={() => router.push('/search?route=colombo-kandy')}
+          onPress={() => router.push('/(tabs)/bookings')}
         />
         <QuickSearchCard
           icon={<Clock size={24} color={Colors.secondary[600]} />}
           title="Quick Book"
           subtitle="Next 2 hours"
-          onPress={() => router.push('/search?time=quick')}
+          onPress={() => router.push('/(tabs)/bookings')}
         />
       </View>
 
       {/* My Bookings Section */}
-      {myBookings.length > 0 && (
+      {(myBookings || []).length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Upcoming Trips</Text>
@@ -222,7 +217,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.bookingsList}>
-            {myBookings.slice(0, 2).map((booking) => (
+            {(myBookings || []).slice(0, 2).map((booking) => (
               <View key={booking.id} style={styles.bookingCard}>
                 <View style={styles.bookingHeader}>
                   <Calendar size={16} color={Colors.primary[600]} />
@@ -263,7 +258,7 @@ export default function HomeScreen() {
               <TouchableOpacity 
                 key={trip.id} 
                 style={styles.tripCard}
-                onPress={() => router.push('/(tabs)/search')} // TODO: Navigate to trip details
+                onPress={() => router.push('/(tabs)/bookings')} // TODO: Navigate to trip details
               >
                 <View style={styles.tripHeader}>
                   <Text style={styles.tripRoute}>
