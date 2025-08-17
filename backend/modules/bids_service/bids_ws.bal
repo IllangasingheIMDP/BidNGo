@@ -48,22 +48,37 @@ public isolated function broadcastBidEvent(json event) {
 }
 
 // Client connects: ws://<host>:8082/ws/bids
-service /ws/bids on new websocket:Listener(8082) {
-    resource isolated function get .(http:Request req) returns websocket:Service|websocket:UpgradeError {
+service /ws on new websocket:Listener(21003) {
+    resource function get .(http:Request req) returns websocket:Service|websocket:UpgradeError {
         return new BidWsService();
     }
 }
-
-service class BidWsService {
+  
+public service class BidWsService {
     *websocket:Service;
 
-    
+    // Add new clients on open
+    remote isolated function onOpen(websocket:Caller caller) returns websocket:Error? {
+        bidClientRegistry.add(caller);
+        return caller->writeTextMessage("connected");
+    }
 
+    // Optional: simple echo & test broadcast
     remote isolated function onMessage(websocket:Caller caller, string|json data) returns websocket:Error? {
         if data is string {
-            if data == "ping" { return caller->writeTextMessage("pong"); }
+            if data == "ping" {
+                return caller->writeTextMessage("pong");
+            } else if data.startsWith("echo ") {
+                return caller->writeTextMessage(data.substring(5));
+            } else if data.startsWith("broadcast ") {
+                bidClientRegistry.broadcast(data.substring(10));
+                return;
+            }
+        } else {
+            // If JSON, just echo it back
+            return caller->writeTextMessage(data.toJsonString());
         }
-        return ();
+        return;
     }
 
     remote isolated function onClose(websocket:Caller caller, int statusCode, string reason) {

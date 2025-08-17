@@ -62,6 +62,19 @@ public function createBid(json data, int passengerId) returns json|error {
     record {record {int id;} value;}? row = check rs.next();
     check rs.close();
     if row is () { return error("BID_CREATE_FAILED"); }
+    // Broadcast websocket event (non-blocking best-effort) about the new bid.
+    // Includes essential public fields; sensitive/internal data omitted.
+    broadcastBidEvent({
+        "type": "bid_created",
+        id: row.value.id,
+        trip_id: req.trip_id,
+        user_id: passengerId,
+        bid_price: req.bid_price,
+        pickup_lat: req.pickup_lat,
+        pickup_lng: req.pickup_lng,
+        pickup_addr: req.pickup_addr,
+        status: "open"
+    });
     return { message: "BID_CREATED", id: row.value.id };
 // ...existing code...
 }
@@ -77,12 +90,23 @@ public function updateBid(int bidId, json data, int passengerId) returns json|er
         pickup_addr = ${req.pickup_addr},
         updated_at = NOW()
         WHERE id = ${bidId} AND user_id = ${passengerId} AND status = 'open'
-        RETURNING id`;
+        RETURNING id, trip_id`;
 
-    stream<record {int id;}, error?> rs = db:dbClient->query(q);
-    record {record {int id;} value;}? row = check rs.next();
+    stream<record {int id; int trip_id;}, error?> rs = db:dbClient->query(q);
+    record {record {int id; int trip_id;} value;}? row = check rs.next();
     check rs.close();
     if row is () { return error("BID_NOT_FOUND_OR_LOCKED"); }
+    // Broadcast update event so clients can refresh bid lists.
+    broadcastBidEvent({
+        "type": "bid_updated",
+        id: bidId,
+        trip_id: row.value.trip_id,
+        user_id: passengerId,
+        bid_price: req.bid_price,
+        pickup_lat: req.pickup_lat,
+        pickup_lng: req.pickup_lng,
+        pickup_addr: req.pickup_addr
+    });
     return { message: "BID_UPDATED", id: row.value.id };
 }
 
