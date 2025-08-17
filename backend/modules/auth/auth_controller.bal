@@ -1,6 +1,6 @@
 import backend.db;
 import ballerina/sql;
-import ballerina/crypto;
+
 import ballerina/lang.'string as strings;
 import ballerina/io;
 import ballerina/jwt;
@@ -23,16 +23,13 @@ type DBUser record {|
     string updated_at;
 |};
 function hashPassword(string pw) returns string|error {
-    string|error hashedPassword = check crypto:hashBcrypt(pw,12);
-   
-    if hashedPassword is error {
-        return hashedPassword ;
-    }
-    return <string>hashedPassword;
+    // DEV ONLY: insecure reversible encoding
+    return pw.toBytes().toBase64();
 }
 function verifyPassword(string plain, string storedHash) returns boolean|error {
-    // If your Ballerina version does not have verifyBcrypt, try crypto:verifyPassword(plain, storedHash)
-    return crypto:verifyBcrypt(plain, storedHash);
+    string candidate = plain.toBytes().toBase64();
+    return candidate == storedHash;
+
 }
 
 // Secure login
@@ -53,7 +50,7 @@ public function login(json data) returns json|error {
     if result is () {
         return error("USER_NOT_FOUND");
     }
-    string|error test = hashPassword(password);
+    
  
     DBUser dbUser = result.value;
 

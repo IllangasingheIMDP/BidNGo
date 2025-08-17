@@ -1,6 +1,6 @@
 import backend.db;
 import ballerina/sql;
-import ballerina/crypto;
+
 import ballerina/lang.'string as strings;
 import ballerina/io;
 
@@ -17,12 +17,13 @@ type DBUser record {|
 |};
 
 function hashPassword(string pw) returns string|error {
-    return crypto:hashBcrypt(pw, workFactor=12);
+    // DEV ONLY: insecure reversible encoding
+    return pw.toBytes().toBase64();
 }
-
 function verifyPassword(string plain, string storedHash) returns boolean|error {
-    // If your Ballerina version does not have verifyBcrypt, try crypto:verifyPassword(plain, storedHash)
-    return crypto:verifyBcrypt(plain, storedHash);
+    string candidate = plain.toBytes().toBase64();
+    return candidate == storedHash;
+
 }
 
 public function getUser(string email) returns DBUser|error {
@@ -70,15 +71,14 @@ public function updatePassword(string email, string currentPassword, string newP
     io:println("New hashed password: ", currentPassword);
     
     DBUser user = check getUser(email);
-    string currentHashed = check hashPassword(currentPassword);
-    io:println("current hashed password: ", currentHashed);
+    
     boolean ok = check verifyPassword(currentPassword, user.password);
     if !ok {
         return error("CURRENT_PASSWORD_INVALID");
     }
     string newHashed = check hashPassword(newPassword);
 
-    ok = check verifyPassword(newPassword, currentHashed);
+    ok = check verifyPassword(newPassword, newHashed);
     if !ok {
         return error("NEW_PASSWORD_INVALID");
     }
