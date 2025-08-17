@@ -6,6 +6,7 @@ import backend.upload_service as upload_service;
 import backend.trips_service as trips_service;
 import backend.bids_service as bids_service;
 import backend.booking_service as booking_service;
+import backend.driver_service as driver_service;
 
 // Health check endpoint on port 9090
 public listener  http:Listener healthListener = new (9090);
@@ -25,6 +26,7 @@ error? err4 = apiListener.attach(trips_service:TripService, "/api/trips/");
 error? err5 = apiListener.attach(bids_service:BidService, "/api/bids/");
 
 error? err6 = apiListener.attach(booking_service:BookingService, "/api/bookings/");
+error? err7 = apiListener.attach(driver_service:DriverService, "/api/drivers/");
 
 service / on healthListener {
     resource function get .() returns string {

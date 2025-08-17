@@ -83,7 +83,7 @@ public function login(json data) returns json|error {
                         keyFile: "private.key" // Path to your private key
                     }
                 },
-                customClaims: { "role": dbUser.role_flags == 1 ? "passenger" : "driver","email":dbUser.email,"id":dbUser.id }
+                customClaims: { "role": dbUser.role_flags == 1 ? "passenger" : "driver","email":dbUser.email,"id":dbUser.id, "name": dbUser.name, "phone": dbUser.phone }
             };
     string token = check jwt:issue(issuerConfig);
 
