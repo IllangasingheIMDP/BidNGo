@@ -75,7 +75,7 @@ public function login(json data) returns json|error {
                         keyFile: "private.key" // Path to your private key
                     }
                 },
-                customClaims: { "role": "passenger","email":dbUser.email }
+                customClaims: { "role": "passenger","email":dbUser.email,"id":dbUser.id }
             };
     string token = check jwt:issue(issuerConfig);
 
