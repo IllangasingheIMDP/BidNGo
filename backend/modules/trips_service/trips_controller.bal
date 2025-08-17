@@ -17,7 +17,7 @@ public type DBTrip record {|
 	string? notes;
 	string created_at;
 	string updated_at;
-	int? driver_user_id;
+	int driver_user_id;
 |};
 
 public type CreateTripReq record {|

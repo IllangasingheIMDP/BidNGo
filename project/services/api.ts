@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthResponse, User, Trip, Bid, Booking, SearchFilters } from '@/types';
 
-const API_BASE_URL = 'https://api.timeshare.example.com';
+const API_BASE_URL = 'http://localhost:8080';
 
 class ApiService {
   private async getToken(): Promise<string | null> {
