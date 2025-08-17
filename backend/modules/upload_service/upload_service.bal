@@ -76,9 +76,11 @@ function uploadToCloudinary(string fileData) returns string|error {
         fileParam = "data:application/octet-stream;base64," + fileParam;
     }
 
-    // Generate UNIX timestamp (seconds) from current UTC time
-    // seconds since epoch
-    string toSign = "timestamp=" +"hello";
+    // Generate UNIX timestamp (seconds) using time:utcNow (tuple [seconds, fraction])
+    time:Utc utc = time:utcNow();
+    int ts = <int>utc[0];
+    string tsStr = ts.toString();
+    string toSign = "timestamp=" + tsStr; // only timestamp param in this simple case
     // Cloudinary signature: SHA1(param_string + api_secret) then hex lowercase
     byte[] hash = crypto:hashSha1((toSign + CLOUDINARY_API_SECRET).toBytes());
     string signature = hash.toBase16().toLowerAscii();
@@ -87,7 +89,7 @@ function uploadToCloudinary(string fileData) returns string|error {
     map<string|string> form = {
         file: fileParam,
         api_key: CLOUDINARY_API_KEY,
-        timestamp: time:utcNow().toString(),
+        timestamp: tsStr,
         signature: signature
     };
 
