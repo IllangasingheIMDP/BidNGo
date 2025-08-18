@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Leaflet Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <style>
+    html, body, #map { height:100%; margin:0; padding:0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+  // Default view centered on Sri Lanka
+  var map = L.map('map').setView([7.8731,80.7718], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function postMessage(data){
+      if(window.ReactNativeWebView){
+        window.ReactNativeWebView.postMessage(JSON.stringify(data));
+      }
+    }
+
+    map.on('click', function(e){
+      postMessage({ event: 'onMapClicked', payload: { coords: { lat: e.latlng.lat, lng: e.latlng.lng } } });
+    });
+
+    document.addEventListener('message', function(event) {
+      try {
+        var msg = JSON.parse(event.data);
+        if(msg.type === 'setCenter') {
+          map.setView([msg.lat, msg.lng], msg.zoom || map.getZoom());
+        }
+        if(msg.type === 'setMarker') { // legacy single marker support
+          if(window._markers){ window._markers.forEach(m=>map.removeLayer(m)); }
+          window._markers = [];
+          var m = L.marker([msg.lat, msg.lng]).addTo(map);
+          window._markers.push(m);
+        }
+        if(msg.type === 'setMarkers') { // array of markers {id, position:{lat,lng}, icon}
+          if(window._markers){ window._markers.forEach(m=>map.removeLayer(m)); }
+          window._markers = [];
+          (msg.markers||[]).forEach(function(mk){
+            var opts = {};
+            if(mk.icon){
+              opts.icon = L.divIcon({html: '<div style="font-size:24px">'+mk.icon+'</div>', iconSize:[24,24], className:'custom-emoji-icon'});
+            }
+            var marker = L.marker([mk.position.lat, mk.position.lng], opts).addTo(map);
+            window._markers.push(marker);
+          });
+        }
+        if(msg.type === 'setRouteLine') { // { points: [{lat,lng}, ...] }
+          if(window._routeLine){ map.removeLayer(window._routeLine); }
+            if(msg.points && msg.points.length>1){
+              window._routeLine = L.polyline(msg.points.map(function(p){return [p.lat,p.lng];}), {color:'#2563eb', weight:4, opacity:0.8}).addTo(map);
+              // Fit bounds to route when first created
+              try { var b = window._routeLine.getBounds(); map.fitBounds(b.pad(0.2)); } catch(e){}
+            }
+        }
+      } catch(err) {
+        console.log('Failed to handle message', err);
+      }
+    });
+  </script>
+</body>
+</html>

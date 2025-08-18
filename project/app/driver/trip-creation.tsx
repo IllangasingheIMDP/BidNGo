@@ -29,7 +29,7 @@ import {
 } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { Spacing, Typography } from '@/constants/Spacing';
-import { LocationPicker } from '@/components/LocationPicker';
+import LocationPicker from '@/components/LocationPicker';
 import { Location } from '@/types';
 import { apiService, BackendTrip } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,7 +53,7 @@ export default function TripCreationScreen() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [myTrips, setMyTrips] = useState<EditingTrip[]>([]);
-  const [showLocationPicker, setShowLocationPicker] = useState<'origin' | 'destination' | null>(null);
+  const [showRoutePicker, setShowRoutePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -271,30 +271,18 @@ export default function TripCreationScreen() {
       <View style={styles.formSection}>
         <Text style={styles.sectionTitle}>Trip Details</Text>
         
-        {/* Origin Location */}
+        {/* Origin & Destination (Route Picker) */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>From</Text>
+          <Text style={styles.inputLabel}>Route</Text>
           <TouchableOpacity
-            style={[styles.locationInput, !formData.origin && styles.placeholderInput]}
-            onPress={() => setShowLocationPicker('origin')}
+            style={[styles.locationInput, !(formData.origin && formData.destination) && styles.placeholderInput]}
+            onPress={() => setShowRoutePicker(true)}
           >
             <MapPin size={20} color={formData.origin ? Colors.primary[600] : Colors.neutral[500]} />
-            <Text style={[styles.locationText, !formData.origin && styles.placeholderText]}>
-              {formData.origin ? formData.origin.address : 'Select origin location'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Destination Location */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>To</Text>
-          <TouchableOpacity
-            style={[styles.locationInput, !formData.destination && styles.placeholderInput]}
-            onPress={() => setShowLocationPicker('destination')}
-          >
-            <Navigation size={20} color={formData.destination ? Colors.primary[600] : Colors.neutral[500]} />
-            <Text style={[styles.locationText, !formData.destination && styles.placeholderText]}>
-              {formData.destination ? formData.destination.address : 'Select destination location'}
+            <Text style={[styles.locationText, !(formData.origin && formData.destination) && styles.placeholderText]} numberOfLines={2}>
+              {formData.origin && formData.destination
+                ? `${formData.origin.address.split(',')[0]} → ${formData.destination.address.split(',')[0]}`
+                : 'Select origin & destination'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -517,23 +505,17 @@ export default function TripCreationScreen() {
       {/* Content */}
       {activeTab === 'create' || editingTripId ? renderCreateForm() : renderManageTrips()}
 
-      {/* Location Picker Modal */}
-      {showLocationPicker && (
+      {/* Route Picker Modal (select both origin & destination) */}
+      {showRoutePicker && (
         <LocationPicker
-          onLocationSelect={(location) => {
-            if (showLocationPicker === 'origin') {
-              setFormData({ ...formData, origin: location });
-            } else {
-              setFormData({ ...formData, destination: location });
-            }
-            setShowLocationPicker(null);
+          mode="route"
+          initialOrigin={formData.origin || undefined}
+          initialDestination={formData.destination || undefined}
+          onRouteSelect={(o,d)=>{
+            setFormData({...formData, origin:o, destination:d});
+            setShowRoutePicker(false);
           }}
-          onClose={() => setShowLocationPicker(null)}
-          initialLocation={
-            showLocationPicker === 'origin' 
-              ? formData.origin || undefined
-              : formData.destination || undefined
-          }
+          onClose={()=>setShowRoutePicker(false)}
         />
       )}
 

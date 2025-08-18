@@ -19,9 +19,11 @@
     "@react-navigation/native": "^7.0.14",
     "cross-env": "^10.0.0",
     "expo": "53.0.20",
+    "expo-asset": "~11.1.7",
     "expo-blur": "~14.1.5",
     "expo-camera": "~16.1.11",
     "expo-constants": "~17.1.3",
+    "expo-file-system": "~18.1.11",
     "expo-font": "~13.3.2",
     "expo-haptics": "~14.1.4",
     "expo-image-picker": "^16.1.4",
@@ -42,6 +44,7 @@
     "react-native": "0.79.5",
     "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-leaflet-view": "^1.1.2",
     "react-native-maps": "1.20.1",
     "react-native-maps-directions": "^1.9.0",
     "react-native-modal": "^14.0.0-rc.1",
@@ -52,7 +55,8 @@
     "react-native-svg": "15.11.2",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "^0.20.0",
-    "react-native-webview": "13.13.5"
+    "react-native-webview": "13.13.5",
+    "react-native-yandexmapkit": "^0.1.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

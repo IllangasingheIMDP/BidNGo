@@ -1,867 +1,359 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  FlatList,
-  Alert,
-  ActivityIndicator,
-  Dimensions,
-  Platform
-} from 'react-native';
-import MapView, { Marker, UrlTile } from 'react-native-maps';
-import * as ExpoLocation from 'expo-location';
-import { X, MapPin, Search, Map, List, Crosshair, Target } from 'lucide-react-native';
+
+
+
+
+
+
+
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, FlatList, ActivityIndicator, Platform } from 'react-native';
+import * as Location from 'expo-location';
+import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system';
+import { LeafletView, MapMarker, WebviewLeafletMessage } from 'react-native-leaflet-view';
 import { Colors } from '@/constants/Colors';
 import { Spacing, Typography } from '@/constants/Spacing';
-import { Location } from '@/types';
+import { Location as AppLocation } from '@/types';
+import { MapPin, X, Crosshair, Search } from 'lucide-react-native';
 
-interface LocationPickerProps {
-  onLocationSelect: (location: Location) => void;
-  onClose: () => void;
-  initialLocation?: Location;
+// Location picker modal using Leaflet inside WebView.
+
+interface SingleSelectProps {
+	mode?: 'single';
+	onLocationSelect: (loc: AppLocation) => void;
+	initialLocation?: AppLocation;
 }
 
-interface NominatimResult {
-  place_id: string;
-  lat: string;
-  lon: string;
-  display_name: string;
-  address?: {
-    city?: string;
-    town?: string;
-    village?: string;
-    state?: string;
-    country?: string;
-  };
+interface RouteSelectProps {
+	mode: 'route';
+	onRouteSelect: (origin: AppLocation, destination: AppLocation) => void;
+	initialOrigin?: AppLocation;
+	initialDestination?: AppLocation;
 }
 
-const { width, height } = Dimensions.get('window');
+type Props = (SingleSelectProps | RouteSelectProps) & { onClose: () => void };
 
-// Sri Lanka bounds
-const SRI_LANKA_REGION = {
-  latitude: 7.8731,
-  longitude: 80.7718,
-  latitudeDelta: 3.0,
-  longitudeDelta: 3.0,
+// Simple Nominatim (OpenStreetMap) search endpoint (no key) - usage throttled.
+async function searchPlaces(query: string): Promise<AppLocation[]> {
+	if (!query) return [];
+	try {
+		const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8`;
+		const res = await fetch(url, { headers: { 'Accept-Language': 'en', 'User-Agent': 'BidNGo/1.0 (contact: example@example.com)' } });
+		const data = await res.json();
+		return data.map((d: any) => ({
+			lat: parseFloat(d.lat),
+			lng: parseFloat(d.lon),
+			address: d.display_name,
+			city: d.address?.city || d.address?.town || d.address?.village || undefined,
+		}));
+	} catch (e) {
+		console.warn('Search failed', e);
+		return [];
+	}
+}
+
+async function reverseGeocode(lat: number, lng: number): Promise<string> {
+	try {
+		const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+		const res = await fetch(url, { headers: { 'Accept-Language': 'en', 'User-Agent': 'BidNGo/1.0 (contact: example@example.com)' } });
+		const data = await res.json();
+		return data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+	} catch {
+		return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+	}
+}
+
+export const LocationPicker: React.FC<Props> = (props) => {
+	const { onClose } = props;
+	const isRoute = props.mode === 'route';
+	const initialLocation = !isRoute ? props.initialLocation : undefined;
+	// Sri Lanka default center if nothing else
+	const SRI_LANKA_CENTER = { lat: 7.8731, lng: 80.7718 };
+	const [htmlContent, setHtmlContent] = useState<string | null>(null);
+	const [search, setSearch] = useState('');
+	const [results, setResults] = useState<AppLocation[]>([]);
+	const [searching, setSearching] = useState(false);
+	const [center, setCenter] = useState<{ lat: number; lng: number } | null>(
+    initialLocation ? { lat: initialLocation.lat, lng: initialLocation.lng } : (isRoute && props.initialOrigin ? { lat: props.initialOrigin.lat, lng: props.initialOrigin.lng } : SRI_LANKA_CENTER)
+  );
+	const [selected, setSelected] = useState<AppLocation | null>(initialLocation || null); // single mode only
+	const [origin, setOrigin] = useState<AppLocation | null>(isRoute ? (props.initialOrigin || null) : null);
+	const [destination, setDestination] = useState<AppLocation | null>(isRoute ? (props.initialDestination || null) : null);
+	const [activePoint, setActivePoint] = useState<'origin' | 'destination'>(isRoute ? 'origin' : 'origin');
+	const [manualLat, setManualLat] = useState('');
+	const [manualLng, setManualLng] = useState('');
+		const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// Load leaflet asset html required by react-native-leaflet-view in Expo
+	useEffect(() => {
+		let mounted = true;
+		const load = async () => {
+			try {
+				// Local leaflet HTML asset
+				const path = require('../assets/leaflet/leaflet.html');
+				const asset = Asset.fromModule(path);
+				await asset.downloadAsync();
+				const html = await FileSystem.readAsStringAsync(asset.localUri!);
+				if (mounted) setHtmlContent(html);
+			} catch (e) {
+				console.warn('Failed loading leaflet html', e);
+			}
+		};
+		load();
+		return () => { mounted = false; };
+	}, []);
+
+	// Acquire current location if no initial (single mode only)
+	useEffect(() => {
+		(async () => {
+			if (initialLocation || isRoute) return;
+			const { status } = await Location.requestForegroundPermissionsAsync();
+			if (status !== 'granted') return;
+			const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+			const address = await reverseGeocode(loc.coords.latitude, loc.coords.longitude);
+			setCenter({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+			setSelected({ lat: loc.coords.latitude, lng: loc.coords.longitude, address });
+		})();
+	}, [initialLocation, isRoute]);
+
+	// Debounced search
+	useEffect(() => {
+		if (searchTimeout.current) clearTimeout(searchTimeout.current);
+		if (!search) { setResults([]); return; }
+		searchTimeout.current = setTimeout(async () => {
+			setSearching(true);
+			const r = await searchPlaces(search);
+			setResults(r);
+			setSearching(false);
+		}, 400);
+		return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
+	}, [search]);
+
+	const markers: MapMarker[] = isRoute
+	? [origin && { id: 'origin', position: { lat: origin.lat, lng: origin.lng }, icon: '🟢', size: [32, 32] }, destination && { id: 'dest', position: { lat: destination.lat, lng: destination.lng }, icon: '🔴', size: [32, 32] }].filter(Boolean) as MapMarker[]
+	: selected ? [{ id: 'sel', position: { lat: selected.lat, lng: selected.lng }, icon: '📍', size: [32, 32] }] : [];
+
+	const handleMessage = useCallback(async (msg: WebviewLeafletMessage) => {
+		if (msg.event === 'onMapClicked' && msg.payload?.coords) {
+			const { lat, lng } = msg.payload.coords;
+			const address = await reverseGeocode(lat, lng);
+			if (isRoute) {
+				if (activePoint === 'origin') {
+					setOrigin({ lat, lng, address });
+					setActivePoint('destination');
+				} else {
+					setDestination({ lat, lng, address });
+				}
+			} else {
+				setSelected({ lat, lng, address });
+			}
+			setCenter({ lat, lng });
+		}
+	}, [isRoute, activePoint]);
+
+	const confirm = () => {
+		if (isRoute) {
+			if (origin && destination && props.mode === 'route') {
+				props.onRouteSelect(origin, destination);
+			}
+		} else if (!isRoute && selected && 'onLocationSelect' in props) {
+			props.onLocationSelect(selected as AppLocation);
+		}
+	};
+
+	// Manual coordinate add (for whichever active point or single)
+	const applyManual = async () => {
+		const lat = parseFloat(manualLat);
+		const lng = parseFloat(manualLng);
+		if (isNaN(lat) || isNaN(lng)) return;
+		const address = await reverseGeocode(lat, lng);
+		if (isRoute) {
+			if (activePoint === 'origin') { setOrigin({ lat, lng, address }); }
+			else { setDestination({ lat, lng, address }); }
+		} else { setSelected({ lat, lng, address }); }
+		setCenter({ lat, lng });
+		setManualLat(''); setManualLng('');
+	};
+
+	return (
+		<Modal animationType="slide" transparent={false}>
+			<View style={styles.container}>
+				<View style={styles.header}>
+					<Text style={styles.title}>Select Location</Text>
+					<TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+						<X size={22} color={Colors.neutral[700]} />
+					</TouchableOpacity>
+				</View>
+				<View style={styles.searchRow}>
+					<Search size={18} color={Colors.neutral[500]} />
+					<TextInput
+						style={styles.searchInput}
+						placeholder="Search place or address"
+						value={search}
+						onChangeText={setSearch}
+						autoCorrect={false}
+						autoCapitalize='none'
+					/>
+					<TouchableOpacity
+						style={styles.currentBtn}
+						onPress={async () => {
+							const { status } = await Location.requestForegroundPermissionsAsync();
+							if (status !== 'granted') return;
+							const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+							const address = await reverseGeocode(loc.coords.latitude, loc.coords.longitude);
+									if (isRoute) {
+										if (activePoint === 'origin') setOrigin({ lat: loc.coords.latitude, lng: loc.coords.longitude, address });
+										else setDestination({ lat: loc.coords.latitude, lng: loc.coords.longitude, address });
+									} else {
+										setSelected({ lat: loc.coords.latitude, lng: loc.coords.longitude, address });
+									}
+							setCenter({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+						}}
+					>
+						<Crosshair size={18} color={Colors.primary[600]} />
+					</TouchableOpacity>
+				</View>
+					{isRoute && (
+						<View style={styles.routeToggleRow}>
+							<TouchableOpacity style={[styles.pointToggle, activePoint==='origin' && styles.pointActive]} onPress={()=>setActivePoint('origin')}>
+								<Text style={[styles.pointToggleText, activePoint==='origin' && styles.pointToggleTextActive]}>Origin {origin? '✓':''}</Text>
+							</TouchableOpacity>
+							<TouchableOpacity style={[styles.pointToggle, activePoint==='destination' && styles.pointActive]} onPress={()=>setActivePoint('destination')}>
+								<Text style={[styles.pointToggleText, activePoint==='destination' && styles.pointToggleTextActive]}>Destination {destination? '✓':''}</Text>
+							</TouchableOpacity>
+						</View>
+					)}
+					<View style={styles.manualRow}>
+						<TextInput style={styles.manualInput} placeholder="Lat" value={manualLat} onChangeText={setManualLat} keyboardType="decimal-pad" />
+						<TextInput style={styles.manualInput} placeholder="Lng" value={manualLng} onChangeText={setManualLng} keyboardType="decimal-pad" />
+						<TouchableOpacity style={styles.manualApplyBtn} onPress={applyManual}>
+							<Text style={styles.manualApplyText}>Set</Text>
+						</TouchableOpacity>
+					</View>
+				{search.length > 0 && (
+					<View style={styles.results}>
+						{searching && <ActivityIndicator size="small" color={Colors.primary[600]} />}
+						<FlatList
+							data={results}
+							keyExtractor={(_, i) => i.toString()}
+							keyboardShouldPersistTaps='handled'
+							renderItem={({ item }) => (
+								<TouchableOpacity
+									style={styles.resultItem}
+									onPress={() => {
+										setSelected(item);
+										setCenter({ lat: item.lat, lng: item.lng });
+										setSearch(item.address.split(',')[0]);
+										setResults([]); // collapse list
+									}}
+								>
+									<MapPin size={16} color={Colors.primary[600]} />
+									<Text style={styles.resultText} numberOfLines={1}>{item.address}</Text>
+								</TouchableOpacity>
+							)}
+						/>
+					</View>
+				)}
+				<View style={styles.mapWrapper}>
+					{!htmlContent || !center ? (
+						<View style={styles.loadingMap}> 
+							<ActivityIndicator size='large' color={Colors.primary[600]} />
+							<Text style={styles.loadingText}>Loading map...</Text>
+						</View>
+					) : (
+						<LeafletView
+							source={{ html: htmlContent }}
+							mapCenterPosition={center}
+							mapMarkers={markers}
+							onMessageReceived={handleMessage}
+							zoom={13}
+							doDebug={false}
+							zoomControl
+						/>
+					)}
+				</View>
+				<View style={styles.footer}>
+					{isRoute ? (
+						<View style={{ gap: 8 }}>
+							<View style={styles.selectedBox}>
+								<MapPin size={18} color={Colors.primary[600]} />
+								<Text style={styles.selectedText} numberOfLines={2}>
+									{origin ? `Origin: ${origin.address}` : 'Select origin (tap map)' }
+								</Text>
+							</View>
+							<View style={styles.selectedBox}>
+								<MapPin size={18} color={Colors.error[600]} />
+								<Text style={styles.selectedText} numberOfLines={2}>
+									{destination ? `Destination: ${destination.address}` : 'Select destination' }
+								</Text>
+							</View>
+							<TouchableOpacity
+								style={[styles.confirmBtn, !(origin && destination) && { opacity: 0.5 }]}
+								disabled={!(origin && destination)}
+								onPress={confirm}
+							>
+								<Text style={styles.confirmText}>Use these locations</Text>
+							</TouchableOpacity>
+						</View>
+					) : (
+						<>
+							<View style={styles.selectedBox}>
+								<MapPin size={18} color={Colors.primary[600]} />
+								<Text style={styles.selectedText} numberOfLines={2}>
+									{selected ? selected.address : 'Tap map or search to pick location'}
+								</Text>
+							</View>
+							<TouchableOpacity
+								style={[styles.confirmBtn, !selected && { opacity: 0.5 }]}
+								disabled={!selected}
+								onPress={confirm}
+							>
+								<Text style={styles.confirmText}>Use this location</Text>
+							</TouchableOpacity>
+						</>
+					)}
+				</View>
+			</View>
+		</Modal>
+	);
 };
 
-const popularLocations: Location[] = [
-  { lat: 6.9271, lng: 79.8612, address: 'Colombo Fort', city: 'Colombo' },
-  { lat: 6.9319, lng: 79.8478, address: 'Pettah', city: 'Colombo' },
-  { lat: 6.8649, lng: 79.8997, address: 'Mount Lavinia', city: 'Colombo' },
-  { lat: 7.2906, lng: 80.6337, address: 'Kandy City Center', city: 'Kandy' },
-  { lat: 6.0535, lng: 80.2210, address: 'Galle Fort', city: 'Galle' },
-  { lat: 7.9554, lng: 81.0137, address: 'Anuradhapura', city: 'Anuradhapura' },
-  { lat: 8.3114, lng: 80.4037, address: 'Dambulla', city: 'Dambulla' },
-];
-
-export function LocationPicker({ onLocationSelect, onClose, initialLocation }: LocationPickerProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Location[]>([]);
-  const [filteredLocations, setFilteredLocations] = useState(popularLocations);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(initialLocation || null);
-  const [mapRegion, setMapRegion] = useState({
-    ...SRI_LANKA_REGION,
-    latitude: initialLocation?.lat || SRI_LANKA_REGION.latitude,
-    longitude: initialLocation?.lng || SRI_LANKA_REGION.longitude,
-  });
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSearchResults, setShowSearchResults] = useState(false);
-  const [gettingCurrentLocation, setGettingCurrentLocation] = useState(false);
-  const [mapReady, setMapReady] = useState(false); // prevents premature controlled region causing blank map
-  const [mapLayoutDone, setMapLayoutDone] = useState(false); // ensure layout pass complete before animating
-
-  // Using OpenStreetMap tiles instead of Google Maps. No provider prop -> default native provider, we overlay OSM tiles.
-  // NOTE: Heavy production usage of OSM default tile server is discouraged; consider a hosted tile service.
-
-  const mapRef = useRef<MapView>(null);
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (initialLocation) {
-      setSelectedLocation(initialLocation);
-      const newRegion = {
-        latitude: initialLocation.lat,
-        longitude: initialLocation.lng,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      };
-      setMapRegion(newRegion);
-      console.log('Initial location set:', initialLocation, 'Region:', newRegion);
-    }
-  }, [initialLocation]);
-
-  // Debounced search function
-  const performSearch = async (query: string) => {
-
-    if (!query.trim() || query.length < 3) {
-      setSearchResults([]);
-      setShowSearchResults(false);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      // Use a more reliable geocoding service with better error handling
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-
-      // 
-      const searchUrl = `https://nominatim.openstreetmap.org/search?` +
-  `q=${encodeURIComponent(query)}&` +
-  `format=json&` +
-  `countrycodes=lk&` +
-  `limit=10&` +
-  `addressdetails=1&` +
-  `accept-language=en`;
-
-const response = await fetch(searchUrl, {
-  headers: {
-    'User-Agent': 'BidNGo-Mobile-App/1.0 (contact@example.com)',
-    'Accept': 'application/json',
-  }
-});
-
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Response is not JSON');
-      }
-
-      const text = await response.text();
-      console.log('Raw response:', text.substring(0, 200) + '...');
-
-      // Check if response is actually JSON
-      if (!text.trim() || (!text.trim().startsWith('[') && !text.trim().startsWith('{'))) {
-        throw new Error('Invalid JSON response format');
-      }
-
-      let data: NominatimResult[];
-      try {
-        data = JSON.parse(text);
-      } catch (parseError) {
-        console.error('JSON Parse Error:', parseError);
-        throw new Error('Failed to parse response as JSON');
-      }
-
-      if (!Array.isArray(data)) {
-        console.error('Response is not an array:', data);
-        throw new Error('Invalid response format - expected array');
-      }
-
-      console.log('Parsed data:', data.length, 'results');
-
-      const locations: Location[] = data.map(item => ({
-        lat: parseFloat(item.lat),
-        lng: parseFloat(item.lon),
-        address: item.display_name.split(',')[0], // First part is usually the most relevant
-        city: item.address?.city || item.address?.town || item.address?.village || undefined,
-      }));
-
-      console.log('Mapped locations:', locations);
-
-      setSearchResults(locations);
-      setShowSearchResults(true);
-
-      // Also filter popular locations
-      const filtered = popularLocations.filter(location =>
-        location.address.toLowerCase().includes(query.toLowerCase()) ||
-        location.city?.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredLocations([...filtered, ...locations]);
-
-      console.log('Search completed successfully with', locations.length, 'results');
-
-    } catch (error) {
-      console.error('Search failed:', error);
-
-      // Fallback to local search only
-      const filtered = popularLocations.filter(location =>
-        location.address.toLowerCase().includes(query.toLowerCase()) ||
-        location.city?.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredLocations(filtered);
-      setShowSearchResults(false);
-
-      // Only show error if it's not a user-cancelled search
-      if (error instanceof Error && !error.message.includes('aborted')) {
-        Alert.alert('Search Error', `Online search failed: ${error.message}. Showing local results only.`);
-      }
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    // Set new timeout for debounced search
-    searchTimeoutRef.current = setTimeout(() => {
-      performSearch(query);
-    }, 500);
-
-    if (!query.trim()) {
-      setFilteredLocations(popularLocations);
-      setShowSearchResults(false);
-    }
-  };
-
-  const handleMapPress = async (event: any) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-
-    // Reverse geocoding to get address
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?` +
-        `lat=${latitude}&` +
-        `lon=${longitude}&` +
-        `format=json&` +
-        `addressdetails=1`,
-        {
-          signal: controller.signal,
-          headers: {
-            'User-Agent': 'BidNGo-Mobile-App/1.0',
-            'Accept': 'application/json',
-          }
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const text = await response.text();
-
-        // Check if response is actually JSON
-        if (text.trim().startsWith('{')) {
-          const data = JSON.parse(text);
-
-          const location: Location = {
-            lat: latitude,
-            lng: longitude,
-            address: data.display_name?.split(',')[0] || `Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
-            city: data.address?.city || data.address?.town || data.address?.village || undefined,
-          };
-
-          setSelectedLocation(location);
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('Reverse geocoding failed:', error);
-    }
-
-    // Fallback to coordinates if reverse geocoding fails
-    const location: Location = {
-      lat: latitude,
-      lng: longitude,
-      address: `Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
-    };
-    setSelectedLocation(location);
-  };
-
-  const handleLocationSelect = (location: Location) => {
-    setSelectedLocation(location);
-    setShowSearchResults(false);
-    setSearchQuery('');
-
-    // Update map region to the selected location
-    const newRegion = {
-      latitude: location.lat,
-      longitude: location.lng,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    };
-
-    setMapRegion(newRegion);
-
-    // Animate map to selected location if in map mode
-    if (viewMode === 'map' && mapRef.current) {
-      mapRef.current.animateToRegion(newRegion, 1000);
-    }
-  };
-
-  const handleConfirmLocation = () => {
-    if (selectedLocation) {
-      onLocationSelect(selectedLocation);
-      onClose();
-    } else {
-      Alert.alert('No Location Selected', 'Please select a location first.');
-    }
-  };
-
-  const handleCurrentLocation = async () => {
-    setGettingCurrentLocation(true);
-
-    try {
-      // Request location permission
-      let { status } = await ExpoLocation.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location permission is required to get your current location.');
-        return;
-      }
-
-      // Get current position
-      const location = await ExpoLocation.getCurrentPositionAsync({
-        accuracy: ExpoLocation.Accuracy.High,
-        timeInterval: 10000,
-        distanceInterval: 10,
-      });
-
-      const { latitude, longitude } = location.coords;
-
-      try {
-        // Reverse geocoding to get address
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?` +
-          `lat=${latitude}&` +
-          `lon=${longitude}&` +
-          `format=json&` +
-          `addressdetails=1`,
-          {
-            signal: controller.signal,
-            headers: {
-              'User-Agent': 'BidNGo-Mobile-App/1.0',
-              'Accept': 'application/json',
-            }
-          }
-        );
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const text = await response.text();
-          if (text.trim().startsWith('{')) {
-            const data = JSON.parse(text);
-
-            const locationData: Location = {
-              lat: latitude,
-              lng: longitude,
-              address: data.display_name?.split(',')[0] || `Current Location`,
-              city: data.address?.city || data.address?.town || data.address?.village || 'Current Location',
-            };
-
-            setSelectedLocation(locationData);
-            setMapRegion({
-              latitude,
-              longitude,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            });
-
-            if (mapRef.current) {
-              mapRef.current.animateToRegion({
-                latitude,
-                longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }, 1000);
-            }
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Reverse geocoding failed:', error);
-      }
-
-      // Fallback if reverse geocoding fails
-      const locationData: Location = {
-        lat: latitude,
-        lng: longitude,
-        address: 'Current Location',
-        city: 'Current Location',
-      };
-
-      setSelectedLocation(locationData);
-      setMapRegion({
-        latitude,
-        longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-
-      if (mapRef.current) {
-        mapRef.current.animateToRegion({
-          latitude,
-          longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }, 1000);
-      }
-    } catch (error) {
-      console.error('Current location error:', error);
-      Alert.alert('Error', 'Failed to get current location. Please try again.');
-    } finally {
-      setGettingCurrentLocation(false);
-    }
-  };
-
-  const renderLocationItem = ({ item }: { item: Location }) => (
-    <TouchableOpacity
-      style={styles.locationItem}
-      onPress={() => handleLocationSelect(item)}
-    >
-      <MapPin size={20} color={Colors.primary[600]} />
-      <View style={styles.locationDetails}>
-        <Text style={styles.locationAddress}>{item.address}</Text>
-        {item.city && (
-          <Text style={styles.locationCity}>{item.city}</Text>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderMapView = () => {
-    console.log('Rendering map with region:', mapRegion);
-    console.log('Selected location:', selectedLocation);
-
-    return (
-      <View style={styles.mapContainer}>
-        {!mapReady && (
-          <View style={styles.mapLoaderOverlay} pointerEvents="none">
-            <ActivityIndicator size="large" color={Colors.primary[600]} />
-            <Text style={styles.mapLoaderText}>Loading map...</Text>
-          </View>
-        )}
-        <MapView
-          ref={mapRef}
-          style={styles.map}
-          // Use initialRegion for first paint; switch to controlled region after map is ready.
-          initialRegion={mapRegion}
-          {...(mapReady ? { region: mapRegion } : {})}
-          onRegionChangeComplete={setMapRegion}
-          onPress={handleMapPress}
-          showsUserLocation={false}
-          showsMyLocationButton={false}
-          onMapReady={() => {
-            console.log('Map ready');
-            setMapReady(true);
-            // Ensure we snap to the selected or initial region after a tiny delay (layout complete)
-            setTimeout(() => {
-              if (mapRef.current) {
-                mapRef.current.animateToRegion(mapRegion, 500);
-              }
-            }, 150);
-          }}
-          onMapLoaded={() => console.log('Map loaded')}
-          onLayout={() => {
-            if (!mapLayoutDone) {
-              setMapLayoutDone(true);
-              // Force a redraw workaround for some Android modal issues
-              setTimeout(() => {
-                if (mapRef.current && mapReady) {
-                  mapRef.current.animateToRegion(mapRegion, 250);
-                }
-              }, 100);
-            }
-          }}
-        >
-          {/* OpenStreetMap tile layer */}
-          <UrlTile
-            urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-            maximumZ={19}
-            tileSize={256}
-            shouldReplaceMapContent={true}
-            zIndex={0}
-          />
-          {selectedLocation && (
-            <Marker
-              coordinate={{
-                latitude: selectedLocation.lat,
-                longitude: selectedLocation.lng,
-              }}
-              title={selectedLocation.address}
-              description={selectedLocation.city}
-            />
-          )}
-        </MapView>
-
-        {/* Current location button */}
-        <TouchableOpacity
-          style={[styles.currentLocationButton, gettingCurrentLocation && styles.currentLocationButtonLoading]}
-          onPress={handleCurrentLocation}
-          disabled={gettingCurrentLocation}
-        >
-          {gettingCurrentLocation ? (
-            <ActivityIndicator size="small" color={Colors.white} />
-          ) : (
-            <Target size={20} color={Colors.white} />
-          )}
-        </TouchableOpacity>
-
-        {/* Debug info */}
-        <View style={styles.debugInfo}>
-          <Text style={styles.debugText}>
-            Lat: {mapRegion.latitude.toFixed(4)}, Lng: {mapRegion.longitude.toFixed(4)}
-          </Text>
-          {selectedLocation && (
-            <Text style={styles.debugText}>
-              Selected: {selectedLocation.address}
-            </Text>
-          )}
-        </View>
-      </View>
-    );
-  };
-
-  const renderListView = () => {
-    const dataToShow = showSearchResults ? searchResults : filteredLocations;
-    console.log('Rendering list view with data:', dataToShow.length, 'items');
-    console.log('Show search results:', showSearchResults);
-    console.log('Search query:', searchQuery);
-
-    return (
-      <FlatList
-        data={dataToShow}
-        renderItem={renderLocationItem}
-        keyExtractor={(item) => `${item.lat}-${item.lng}`}
-        style={styles.locationList}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          !showSearchResults && searchQuery.length === 0 ? (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Popular Locations</Text>
-            </View>
-          ) : showSearchResults ? (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Search Results ({dataToShow.length})</Text>
-            </View>
-          ) : null
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Search size={48} color={Colors.neutral[400]} />
-            <Text style={styles.emptyTitle}>No locations found</Text>
-            <Text style={styles.emptySubtitle}>
-              {searchQuery ? 'Try a different search term' : 'Search for a location above'}
-            </Text>
-          </View>
-        }
-      />
-    );
-  };
-
-  return (
-    <Modal visible={true} animationType="slide" presentationStyle="pageSheet">
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Select Location</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color={Colors.neutral[600]} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Search Container */}
-        <View style={styles.searchContainer}>
-          <Search size={20} color={Colors.neutral[500]} />
-          <TextInput
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={handleSearch}
-            placeholder="Search locations..."
-            autoCorrect={false}
-            autoCapitalize="words"
-          />
-          {isSearching && <ActivityIndicator size="small" color={Colors.primary[600]} />}
-        </View>
-
-        {/* View Mode Toggle */}
-        <View style={styles.toggleContainer}>
-          <TouchableOpacity
-            style={[styles.toggleButton, viewMode === 'map' && styles.activeToggle]}
-            onPress={() => setViewMode('map')}
-          >
-            <Map size={20} color={viewMode === 'map' ? Colors.white : Colors.neutral[600]} />
-            <Text style={[styles.toggleText, viewMode === 'map' && styles.activeToggleText]}>
-              Map
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleButton, viewMode === 'list' && styles.activeToggle]}
-            onPress={() => setViewMode('list')}
-          >
-            <List size={20} color={viewMode === 'list' ? Colors.white : Colors.neutral[600]} />
-            <Text style={[styles.toggleText, viewMode === 'list' && styles.activeToggleText]}>
-              List
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Content */}
-        <View style={styles.content}>
-          {viewMode === 'map' ? renderMapView() : renderListView()}
-        </View>
-
-        {/* Selected Location Info */}
-        {selectedLocation && (
-          <View style={styles.selectedLocationContainer}>
-            <View style={styles.selectedLocationInfo}>
-              <MapPin size={16} color={Colors.primary[600]} />
-              <View style={styles.selectedLocationText}>
-                <Text style={styles.selectedLocationAddress} numberOfLines={1}>
-                  {selectedLocation.address}
-                </Text>
-                {selectedLocation.city && (
-                  <Text style={styles.selectedLocationCity} numberOfLines={1}>
-                    {selectedLocation.city}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmLocation}>
-              <Text style={styles.confirmButtonText}>Select</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </Modal>
-  );
-}
+// Export default alias if someone imports default
+export default LocationPicker;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xxxl,
-    paddingBottom: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[200],
-  },
-  title: {
-    fontSize: Typography.sizes.xl,
-    fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
-  },
-  closeButton: {
-    padding: Spacing.sm,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.neutral[50],
-    marginHorizontal: Spacing.xl,
-    marginVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    borderRadius: 12,
-    gap: Spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[900],
-    paddingVertical: Spacing.md,
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    marginHorizontal: Spacing.xl,
-    marginBottom: Spacing.lg,
-    backgroundColor: Colors.neutral[100],
-    borderRadius: 12,
-    padding: 4,
-  },
-  toggleButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-    borderRadius: 8,
-    gap: Spacing.xs,
-  },
-  activeToggle: {
-    backgroundColor: Colors.primary[600],
-  },
-  toggleText: {
-    fontSize: Typography.sizes.sm,
-    fontFamily: 'Inter-Medium',
-    color: Colors.neutral[600],
-  },
-  activeToggleText: {
-    color: Colors.white,
-  },
-  content: {
-    flex: 1,
-  },
-  mapContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  map: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  currentLocationButton: {
-    position: 'absolute',
-    top: Spacing.lg,
-    right: Spacing.lg,
-    backgroundColor: Colors.primary[600],
-    borderRadius: 25,
-    width: 50,
-    height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  currentLocationButtonLoading: {
-    opacity: 0.7,
-  },
-  locationList: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-  },
-  sectionHeader: {
-    paddingVertical: Spacing.md,
-  },
-  sectionTitle: {
-    fontSize: Typography.sizes.sm,
-    fontFamily: 'Inter-Bold',
-    color: Colors.neutral[700],
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  locationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[100],
-  },
-  locationDetails: {
-    flex: 1,
-    marginLeft: Spacing.sm,
-  },
-  locationAddress: {
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[900],
-    marginBottom: 2,
-  },
-  locationCity: {
-    fontSize: Typography.sizes.sm,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xxxl,
-  },
-  emptyTitle: {
-    fontSize: Typography.sizes.lg,
-    fontFamily: 'Inter-Bold',
-    color: Colors.neutral[700],
-    marginTop: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  emptySubtitle: {
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
-    textAlign: 'center',
-  },
-  selectedLocationContainer: {
-    backgroundColor: Colors.white,
-    borderTopWidth: 1,
-    borderTopColor: Colors.neutral[200],
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  selectedLocationInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  selectedLocationText: {
-    flex: 1,
-  },
-  selectedLocationAddress: {
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Medium',
-    color: Colors.neutral[900],
-  },
-  selectedLocationCity: {
-    fontSize: Typography.sizes.sm,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
-  },
-  confirmButton: {
-    backgroundColor: Colors.primary[600],
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: 8,
-  },
-  confirmButtonText: {
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Bold',
-    color: Colors.white,
-  },
-  debugInfo: {
-    position: 'absolute',
-    bottom: Spacing.sm,
-    left: Spacing.sm,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: Spacing.xs,
-    borderRadius: 4,
-  },
-  debugText: {
-    color: Colors.white,
-    fontSize: Typography.sizes.xs,
-    fontFamily: 'Inter-Regular',
-  },
-  mapLoaderOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    zIndex: 10,
-  },
-  mapLoaderText: {
-    marginTop: Spacing.md,
-    fontSize: Typography.sizes.sm,
-    fontFamily: 'Inter-Medium',
-    color: Colors.neutral[600],
-  },
+	container: { flex: 1, backgroundColor: Colors.white },
+	header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: Spacing.xxxl, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.neutral[200] },
+	title: { fontSize: Typography.sizes.lg, fontFamily: 'Inter-Bold', color: Colors.neutral[900] },
+	closeBtn: { position: 'absolute', right: Spacing.lg, top: Spacing.xxxl },
+	searchRow: { flexDirection: 'row', alignItems: 'center', margin: Spacing.lg, backgroundColor: Colors.neutral[50], borderRadius: 12, paddingHorizontal: Spacing.md, gap: Spacing.sm, borderWidth: 1, borderColor: Colors.neutral[200] },
+	searchInput: { flex: 1, height: 44, fontFamily: 'Inter-Regular', fontSize: Typography.sizes.base },
+	currentBtn: { padding: Spacing.xs },
+	results: { maxHeight: 200, marginHorizontal: Spacing.lg, backgroundColor: Colors.white, borderRadius: 12, borderWidth: 1, borderColor: Colors.neutral[200], overflow: 'hidden' },
+	resultItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, gap: Spacing.sm, borderBottomWidth: 1, borderBottomColor: Colors.neutral[100] },
+	resultText: { flex: 1, fontSize: Typography.sizes.sm, fontFamily: 'Inter-Regular', color: Colors.neutral[800] },
+	mapWrapper: { flex: 1, marginHorizontal: Spacing.lg, marginTop: Spacing.md, marginBottom: Spacing.md, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: Colors.neutral[200] },
+	loadingMap: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.md },
+	loadingText: { fontFamily: 'Inter-Regular', color: Colors.neutral[500] },
+	footer: { padding: Spacing.lg, borderTopWidth: 1, borderTopColor: Colors.neutral[200], gap: Spacing.md },
+	selectedBox: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
+	selectedText: { flex: 1, fontSize: Typography.sizes.sm, fontFamily: 'Inter-Regular', color: Colors.neutral[700] },
+	confirmBtn: { backgroundColor: Colors.primary[600], paddingVertical: Spacing.md, borderRadius: 12, alignItems: 'center' },
+	confirmText: { color: Colors.white, fontFamily: 'Inter-Bold', fontSize: Typography.sizes.base },
+	routeToggleRow: { flexDirection: 'row', marginHorizontal: Spacing.lg, gap: Spacing.sm, marginTop: -Spacing.sm },
+	pointToggle: { flex:1, paddingVertical: Spacing.sm, borderRadius: 8, borderWidth:1, borderColor: Colors.neutral[300], alignItems:'center', backgroundColor: Colors.neutral[50] },
+	pointActive: { backgroundColor: Colors.primary[50], borderColor: Colors.primary[400] },
+	pointToggleText: { fontFamily: 'Inter-Medium', color: Colors.neutral[700], fontSize: Typography.sizes.sm },
+	pointToggleTextActive: { color: Colors.primary[700] },
+	manualRow: { flexDirection:'row', marginHorizontal: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.sm },
+	manualInput: { flex:1, height:40, borderWidth:1, borderColor: Colors.neutral[200], borderRadius:8, paddingHorizontal:8, fontFamily:'Inter-Regular' },
+	manualApplyBtn: { backgroundColor: Colors.primary[600], borderRadius:8, paddingHorizontal:16, alignItems:'center', justifyContent:'center' },
+	manualApplyText: { color: Colors.white, fontFamily:'Inter-Bold' },
 });
+
+
+
+
+
+
+
