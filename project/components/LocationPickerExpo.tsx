@@ -13,8 +13,7 @@ import {
   Dimensions,
   StyleSheet,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import MapViewDirections from 'react-native-maps-directions';
+import { GoogleMaps } from 'expo-maps';
 import * as ExpoLocation from 'expo-location';
 import { 
   X, 
@@ -58,7 +57,7 @@ const debugApiKey = () => {
   console.log('API Key length:', GOOGLE_MAPS_APIKEY?.length || 0);
 };
 
-export default function LocationPicker({
+export default function LocationPickerExpo({
   mode,
   initialOrigin,
   initialDestination,
@@ -66,7 +65,7 @@ export default function LocationPicker({
   onRouteSelect,
   onClose,
 }: LocationPickerProps) {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
 
   // Debug API key on mount
   useEffect(() => {
@@ -89,35 +88,6 @@ export default function LocationPicker({
     longitudeDelta: 0.1,
   });
 
-  // Update map region when locations change
-  useEffect(() => {
-    // Request location permissions on mount
-    requestLocationPermission();
-    
-    if (origin && destination && mapRef.current) {
-      // Fit map to show both origin and destination
-      const coordinates = [
-        { latitude: origin.lat, longitude: origin.lng },
-        { latitude: destination.lat, longitude: destination.lng },
-      ];
-      
-      mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
-        animated: true,
-      });
-    } else if ((origin || destination || selectedLocation) && mapRef.current) {
-      const location = origin || destination || selectedLocation;
-      if (location) {
-        mapRef.current.animateToRegion({
-          latitude: location.lat,
-          longitude: location.lng,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }, 1000);
-      }
-    }
-  }, [origin, destination, selectedLocation]);
-
   // Request location permissions
   const requestLocationPermission = async () => {
     try {
@@ -133,6 +103,10 @@ export default function LocationPicker({
     }
   };
 
+  useEffect(() => {
+    requestLocationPermission();
+  }, []);
+
   // Validate coordinates
   const isValidCoordinate = (lat: number, lng: number): boolean => {
     return (
@@ -147,56 +121,6 @@ export default function LocationPicker({
       Math.abs(lat) > 0.000001 && // Avoid exactly 0,0
       Math.abs(lng) > 0.000001
     );
-  };
-
-  // Search for places using Google Places API
-  const searchPlaces = async (query: string) => {
-    if (!query.trim() || query.length < 2) {
-      setSearchResults([]);
-      setShowSearchResults(false);
-      return;
-    }
-
-    if (!GOOGLE_MAPS_APIKEY || GOOGLE_MAPS_APIKEY === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
-      Alert.alert(
-        'API Key Missing', 
-        'Please configure your Google Maps API key in the environment configuration.'
-      );
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      console.log('Searching for:', query);
-      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
-        query
-      )}&key=${GOOGLE_MAPS_APIKEY}&components=country:lk&types=establishment|geocode`;
-      
-      console.log('API URL:', url.replace(GOOGLE_MAPS_APIKEY, 'API_KEY_HIDDEN'));
-      
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      console.log('API Response status:', data.status);
-      
-      if (data.status === 'OK') {
-        setSearchResults(data.predictions || []);
-        setShowSearchResults(true);
-        console.log('Found', data.predictions?.length || 0, 'results');
-      } else if (data.status === 'REQUEST_DENIED') {
-        Alert.alert('API Error', 'Request denied. Please check your API key and enabled services.');
-        console.error('Places API denied:', data.error_message);
-      } else {
-        console.error('Places API error:', data.status, data.error_message);
-        // Show mock results for testing if API fails
-        showMockResults(query);
-      }
-    } catch (error) {
-      console.error('Error searching places:', error);
-      // Show mock results for testing
-      showMockResults(query);
-    }
-    setIsSearching(false);
   };
 
   // Mock results for testing when API is not available
@@ -223,6 +147,19 @@ export default function LocationPicker({
     setShowSearchResults(true);
   };
 
+  // Search for places using Google Places API
+  const searchPlaces = async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    console.log('Searching for:', query);
+    // For now, always show mock results to test the interface
+    showMockResults(query);
+  };
+
   // Get place details and coordinates
   const getPlaceDetails = async (placeId: string): Promise<Location | null> => {
     // Handle mock results
@@ -237,25 +174,6 @@ export default function LocationPicker({
         lng: coords.lng,
         address: placeId === 'mock_1' ? 'Colombo, Sri Lanka' : 'Kandy, Sri Lanka',
       };
-    }
-
-    try {
-      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,formatted_address&key=${GOOGLE_MAPS_APIKEY}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (data.status === 'OK' && data.result) {
-        const { geometry, formatted_address } = data.result;
-        return {
-          lat: geometry.location.lat,
-          lng: geometry.location.lng,
-          address: formatted_address,
-        };
-      } else {
-        console.error('Place details error:', data.status, data.error_message);
-      }
-    } catch (error) {
-      console.error('Error getting place details:', error);
     }
     return null;
   };
@@ -287,61 +205,36 @@ export default function LocationPicker({
   };
 
   // Handle map press for coordinate selection
-  const handleMapPress = async (event: any) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
+  const handleMapPress = async (event: { coordinates: { latitude?: number; longitude?: number } }) => {
+    console.log('Map pressed:', event);
+    const { latitude, longitude } = event.coordinates;
     
     // Validate coordinates more strictly
-    if (!isValidCoordinate(latitude, longitude)) {
+    if (!latitude || !longitude || !isValidCoordinate(latitude, longitude)) {
       Alert.alert('Invalid Location', 'Please select a valid location on the map.');
       console.log('Invalid coordinates:', { latitude, longitude });
       return;
     }
     
-    // Reverse geocode to get address
-    try {
-      const address = await reverseGeocode(latitude, longitude);
-      const location: Location = {
-        lat: latitude,
-        lng: longitude,
-        address: address || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-      };
+    // Create location with coordinates
+    const location: Location = {
+      lat: latitude,
+      lng: longitude,
+      address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+    };
 
-      if (mode === 'single') {
-        setSelectedLocation(location);
-        setSearchQuery(location.address);
+    if (mode === 'single') {
+      setSelectedLocation(location);
+      setSearchQuery(location.address);
+    } else {
+      // Route mode
+      if (activeInput === 'origin') {
+        setOrigin(location);
+        setActiveInput('destination');
       } else {
-        // Route mode
-        if (activeInput === 'origin') {
-          setOrigin(location);
-          setActiveInput('destination');
-        } else {
-          setDestination(location);
-        }
+        setDestination(location);
       }
-    } catch (error) {
-      console.error('Error handling map press:', error);
-      Alert.alert('Error', 'Could not get address for this location.');
     }
-  };
-
-  // Reverse geocoding to get address from coordinates
-  const reverseGeocode = async (lat: number, lng: number): Promise<string | null> => {
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_APIKEY}`
-      );
-      
-      const data = await response.json();
-      
-      if (data.status === 'OK' && data.results.length > 0) {
-        return data.results[0].formatted_address;
-      } else {
-        console.error('Reverse geocoding error:', data.status, data.error_message);
-      }
-    } catch (error) {
-      console.error('Error reverse geocoding:', error);
-    }
-    return null;
   };
 
   // Handle search input change
@@ -443,7 +336,7 @@ export default function LocationPicker({
               <X size={24} color={Colors.neutral[700]} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>
-              {mode === 'single' ? 'Select Location' : 'Select Route'}
+              {mode === 'single' ? 'Select Location' : 'Select Route'} (Expo Maps)
             </Text>
             <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
               <RotateCcw size={20} color={Colors.neutral[600]} />
@@ -534,95 +427,42 @@ export default function LocationPicker({
           {/* Search Results */}
           {renderSearchResults()}
 
-          {/* Map */}
+          {/* Expo Map */}
           <View style={styles.mapContainer}>
-            <MapView
-              ref={mapRef}
+            <GoogleMaps.View
               style={styles.map}
-              provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-              initialRegion={mapRegion}
-              region={mapRegion}
-              onPress={handleMapPress}
-              showsUserLocation={false} // Disable for now to avoid permission issues
-              showsMyLocationButton={false}
-              showsCompass={false}
-              showsScale={false}
-              mapType="standard"
-              loadingEnabled={true}
-              loadingIndicatorColor={Colors.primary[600]}
-              loadingBackgroundColor={Colors.neutral[50]}
-              onMapReady={() => {
-                console.log('Map is ready!');
+              cameraPosition={{
+                coordinates: {
+                  latitude: mapRegion.latitude,
+                  longitude: mapRegion.longitude,
+                },
+                zoom: 12,
               }}
-              onRegionChange={(region) => {
-                console.log('Region changed:', region);
-              }}
-            >
-              {/* Origin Marker */}
-              {origin && (
-                <Marker
-                  coordinate={{ latitude: origin.lat, longitude: origin.lng }}
-                  title="Origin"
-                  description={origin.address}
-                  pinColor="green"
-                />
-              )}
-
-              {/* Destination Marker */}
-              {destination && (
-                <Marker
-                  coordinate={{ latitude: destination.lat, longitude: destination.lng }}
-                  title="Destination"
-                  description={destination.address}
-                  pinColor="red"
-                />
-              )}
-
-              {/* Single Location Marker */}
-              {selectedLocation && mode === 'single' && (
-                <Marker
-                  coordinate={{ latitude: selectedLocation.lat, longitude: selectedLocation.lng }}
-                  title="Selected Location"
-                  description={selectedLocation.address}
-                  pinColor="blue"
-                />
-              )}
-
-              {/* Route Direction */}
-              {origin && destination && GOOGLE_MAPS_APIKEY && GOOGLE_MAPS_APIKEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE' && (
-                <MapViewDirections
-                  origin={{ latitude: origin.lat, longitude: origin.lng }}
-                  destination={{ latitude: destination.lat, longitude: destination.lng }}
-                  apikey={GOOGLE_MAPS_APIKEY}
-                  strokeWidth={4}
-                  strokeColor={Colors.primary[600]}
-                  optimizeWaypoints={true}
-                  mode="DRIVING"
-                  language="en"
-                  onStart={(params) => {
-                    console.log(`Started routing between coords:`, params);
-                  }}
-                  onReady={(result) => {
-                    console.log(`Distance: ${result.distance} km`);
-                    console.log(`Duration: ${result.duration} min.`);
-                    
-                    // Fit the map to show the route
-                    if (mapRef.current) {
-                      mapRef.current.fitToCoordinates(result.coordinates, {
-                        edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
-                        animated: true,
-                      });
-                    }
-                  }}
-                  onError={(errorMessage) => {
-                    console.log('Directions error:', errorMessage);
-                    console.log('Origin:', origin);
-                    console.log('Destination:', destination);
-                    // Don't show alert for directions errors, just log them
-                  }}
-                />
-              )}
-            </MapView>
+              onMapClick={handleMapPress}
+              markers={[
+                // Origin Marker
+                ...(origin ? [{
+                  id: 'origin',
+                  coordinates: { latitude: origin.lat, longitude: origin.lng },
+                  title: 'Origin',
+                  snippet: origin.address,
+                }] : []),
+                // Destination Marker  
+                ...(destination ? [{
+                  id: 'destination',
+                  coordinates: { latitude: destination.lat, longitude: destination.lng },
+                  title: 'Destination',
+                  snippet: destination.address,
+                }] : []),
+                // Single Location Marker
+                ...(selectedLocation && mode === 'single' ? [{
+                  id: 'selected',
+                  coordinates: { latitude: selectedLocation.lat, longitude: selectedLocation.lng },
+                  title: 'Selected Location',
+                  snippet: selectedLocation.address,
+                }] : []),
+              ]}
+            />
 
             {/* Map Instructions */}
             <View style={styles.mapInstructions}>
