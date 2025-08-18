@@ -130,8 +130,57 @@ export const LocationPicker: React.FC<Props> = (props) => {
 	}, [search]);
 
 	const markers: MapMarker[] = isRoute
-	? [origin && { id: 'origin', position: { lat: origin.lat, lng: origin.lng }, icon: '🟢', size: [32, 32] }, destination && { id: 'dest', position: { lat: destination.lat, lng: destination.lng }, icon: '🔴', size: [32, 32] }].filter(Boolean) as MapMarker[]
-	: selected ? [{ id: 'sel', position: { lat: selected.lat, lng: selected.lng }, icon: '📍', size: [32, 32] }] : [];
+	? [
+		origin && { 
+			id: 'origin', 
+			position: { lat: origin.lat, lng: origin.lng },
+			icon: '🟢',
+			size: [32, 32] as [number, number]
+		}, 
+		destination && { 
+			id: 'dest', 
+			position: { lat: destination.lat, lng: destination.lng },
+			icon: '🔴', 
+			size: [32, 32] as [number, number]
+		}
+	].filter(Boolean) as MapMarker[]
+	: selected ? [{ 
+		id: 'sel', 
+		position: { lat: selected.lat, lng: selected.lng },
+		icon: '📍',
+		size: [32, 32] as [number, number]
+	}] : [];
+
+	// Create route layer for LeafletView
+	const routeLayer = isRoute && origin && destination ? {
+		id: 'route',
+		type: 'polyline',
+		positions: [
+			{ lat: origin.lat, lng: origin.lng },
+			{ lat: destination.lat, lng: destination.lng }
+		],
+		color: '#2563eb',
+		weight: 4,
+		opacity: 0.8
+	} : null;
+
+	const mapLayers = routeLayer ? [routeLayer] : [];
+
+	// Debug markers
+	useEffect(() => {
+		console.log('Markers updated:', markers);
+		console.log('IsRoute:', isRoute, 'Origin:', origin, 'Destination:', destination);
+	}, [markers, isRoute, origin, destination]);
+
+	// Simple effect to fit bounds when both points exist
+	useEffect(() => {
+		if (isRoute && origin && destination) {
+			// Calculate center point and adjust zoom
+			const midLat = (origin.lat + destination.lat) / 2;
+			const midLng = (origin.lng + destination.lng) / 2;
+			setCenter({ lat: midLat, lng: midLng });
+		}
+	}, [origin, destination, isRoute]);
 
 	const handleMessage = useCallback(async (msg: WebviewLeafletMessage) => {
 		if (msg.event === 'onMapClicked' && msg.payload?.coords) {
@@ -241,7 +290,16 @@ export const LocationPicker: React.FC<Props> = (props) => {
 								<TouchableOpacity
 									style={styles.resultItem}
 									onPress={() => {
-										setSelected(item);
+										if (isRoute) {
+											if (activePoint === 'origin') {
+												setOrigin(item);
+												setActivePoint('destination');
+											} else {
+												setDestination(item);
+											}
+										} else {
+											setSelected(item);
+										}
 										setCenter({ lat: item.lat, lng: item.lng });
 										setSearch(item.address.split(',')[0]);
 										setResults([]); // collapse list
@@ -265,8 +323,9 @@ export const LocationPicker: React.FC<Props> = (props) => {
 							source={{ html: htmlContent }}
 							mapCenterPosition={center}
 							mapMarkers={markers}
+							mapLayers={mapLayers}
 							onMessageReceived={handleMessage}
-							zoom={13}
+							zoom={center === SRI_LANKA_CENTER ? 7 : 13}
 							doDebug={false}
 							zoomControl
 						/>
