@@ -12,13 +12,21 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs location access to help you find and create trips nearby."
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyCYWffFRDPzZtxrdvyapGy36kQaQDzVaSU"
       }
     },
     "android": {
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCYWffFRDPzZtxrdvyapGy36kQaQDzVaSU"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
