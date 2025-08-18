@@ -28,8 +28,9 @@ import {
   Navigation,
 } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
+import LocationPicker from '@/components/LocationPicker';
 import { Spacing, Typography } from '@/constants/Spacing';
-import SimpleLocationPicker from '@/components/SimpleLocationPicker';
+
 import { Location } from '@/types';
 import { apiService, BackendTrip } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -506,18 +507,20 @@ export default function TripCreationScreen() {
       {activeTab === 'create' || editingTripId ? renderCreateForm() : renderManageTrips()}
 
       {/* Route Picker Modal (select both origin & destination) */}
-      {showRoutePicker && (
-        <SimpleLocationPicker
-          mode="route"
-          initialOrigin={formData.origin || undefined}
-          initialDestination={formData.destination || undefined}
-          onRouteSelect={(origin: Location, destination: Location) => {
-            setFormData({...formData, origin, destination});
-            setShowRoutePicker(false);
-          }}
-          onClose={() => setShowRoutePicker(false)}
-        />
-      )}
+      <LocationPicker
+        visible={showRoutePicker}
+        onClose={() => setShowRoutePicker(false)}
+        onLocationsSelected={(origin, destination) => {
+          setFormData({
+            ...formData,
+            origin,
+            destination,
+          });
+          setShowRoutePicker(false);
+        }}
+        initialOrigin={formData.origin}
+        initialDestination={formData.destination}
+      />
 
       {/* Date Picker */}
       {showDatePicker && (
