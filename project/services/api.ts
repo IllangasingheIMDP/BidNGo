@@ -92,7 +92,7 @@ export interface AuthResponse {
   token: string;
 }
 
-const API_BASE_URL = 'http://192.168.39.138:8080';
+const API_BASE_URL = 'https://sjt6dkzd-9000.inc1.devtunnels.ms';
 
 class ApiService {
   private async getToken(): Promise<string | null> {
