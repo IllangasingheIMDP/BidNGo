@@ -28,7 +28,7 @@ import {
   Navigation,
 } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
-import GeneralMapViewProps from '@/components/LocationPicker';
+import LocationPicker from '../../components/LocationPicker';
 import { Spacing, Typography } from '@/constants/Spacing';
 
 import { Location } from '@/types';
@@ -287,9 +287,27 @@ export default function TripCreationScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-        <GeneralMapViewProps
-        
-      />
+        {/* LocationPicker Modal */}
+        {showRoutePicker && (
+          <Modal visible transparent animationType="slide">
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+              <View style={{ backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', width: '95%', maxWidth: 500 }}>
+                <LocationPicker
+                  initialOrigin={formData.origin}
+                  initialDestination={formData.destination}
+                  onLocationsSelected={(origin, destination) => {
+                    setFormData(fd => ({ ...fd, origin, destination }));
+                    setShowRoutePicker(false);
+                  }}
+                  height={400}
+                />
+                <TouchableOpacity style={{ padding: 16, alignItems: 'center' }} onPress={() => setShowRoutePicker(false)}>
+                  <Text style={{ color: '#e53935', fontWeight: 'bold' }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        )}
 
         {/* Departure Date & Time */}
         <View style={styles.inputGroup}>
