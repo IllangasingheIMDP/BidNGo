@@ -28,8 +28,9 @@ import {
   Navigation,
 } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
+import LocationPicker from '../../components/LocationPicker';
 import { Spacing, Typography } from '@/constants/Spacing';
-import LocationPicker from '@/components/LocationPicker';
+
 import { Location } from '@/types';
 import { apiService, BackendTrip } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -286,6 +287,27 @@ export default function TripCreationScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+        {/* LocationPicker Modal */}
+        {showRoutePicker && (
+          <Modal visible transparent animationType="slide">
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+              <View style={{ backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', width: '95%', maxWidth: 500, height: '85%' }}>
+                <LocationPicker
+                  initialOrigin={formData.origin}
+                  initialDestination={formData.destination}
+                  onLocationsSelected={(origin, destination) => {
+                    setFormData(fd => ({ ...fd, origin, destination }));
+                    setShowRoutePicker(false);
+                  }}
+                  height={600}
+                />
+                <TouchableOpacity style={{ padding: 16, alignItems: 'center' }} onPress={() => setShowRoutePicker(false)}>
+                  <Text style={{ color: '#e53935', fontWeight: 'bold' }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        )}
 
         {/* Departure Date & Time */}
         <View style={styles.inputGroup}>
@@ -506,18 +528,7 @@ export default function TripCreationScreen() {
       {activeTab === 'create' || editingTripId ? renderCreateForm() : renderManageTrips()}
 
       {/* Route Picker Modal (select both origin & destination) */}
-      {showRoutePicker && (
-        <LocationPicker
-          mode="route"
-          initialOrigin={formData.origin || undefined}
-          initialDestination={formData.destination || undefined}
-          onRouteSelect={(o,d)=>{
-            setFormData({...formData, origin:o, destination:d});
-            setShowRoutePicker(false);
-          }}
-          onClose={()=>setShowRoutePicker(false)}
-        />
-      )}
+      
 
       {/* Date Picker */}
       {showDatePicker && (

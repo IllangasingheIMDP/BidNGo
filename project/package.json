@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "cross-env EXPO_NO_TELEMETRY=1 expo start",
     "build:web": "expo export --platform web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.1",
@@ -15,6 +17,7 @@
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/datetimepicker": "^8.4.1",
     "@react-native-community/geolocation": "^3.4.0",
+    "@react-native-google-signin/google-signin": "^15.0.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "cross-env": "^10.0.0",
@@ -30,6 +33,7 @@
     "expo-linear-gradient": "~14.1.5",
     "expo-linking": "~7.1.7",
     "expo-location": "~18.1.6",
+    "expo-maps": "~0.11.0",
     "expo-notifications": "^0.31.4",
     "expo-router": "~5.1.4",
     "expo-secure-store": "^14.2.3",
@@ -47,7 +51,6 @@
     "react-native-google-places-autocomplete": "^2.5.7",
     "react-native-leaflet-view": "^1.1.2",
     "react-native-maps": "1.20.1",
-    "react-native-maps-directions": "^1.9.0",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
@@ -56,8 +59,7 @@
     "react-native-svg": "15.11.2",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "^0.20.0",
-    "react-native-webview": "13.13.5",
-    "react-native-yandexmapkit": "^0.1.4"
+    "react-native-webview": "13.13.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

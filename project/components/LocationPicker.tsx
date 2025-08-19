@@ -1,644 +1,615 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-  TextInput,
-  FlatList,
-  Alert,
-  Platform,
-  KeyboardAvoidingView,
-  SafeAreaView,
-  Dimensions,
-} from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import MapViewDirections from 'react-native-maps-directions';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { 
-  X, 
-  Search, 
-  MapPin, 
-  Navigation, 
-  RotateCcw,
-  Check
-} from 'lucide-react-native';
-import { Colors } from '../constants/Colors';
-import { Spacing, Typography } from '../constants/Spacing';
-import { Location } from '../types';
-import { getGoogleMapsApiKey } from '../config/env';
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, View, Dimensions, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Platform, Keyboard } from 'react-native';
+import MapView, { PROVIDER_GOOGLE, Marker, Polyline, Region } from 'react-native-maps';
+import * as Location from 'expo-location';
 
-const { width, height } = Dimensions.get('window');
+const GOOGLE_MAPS_API_KEY = Platform.OS === 'ios'
+  ? 'AIzaSyCtpf8qeboIsNHPaO7idcU2e_3huaHpae0'
+  : 'AIzaSyCtpf8qeboIsNHPaO7idcU2e_3huaHpae0';
+
+type Place = {
+  description: string;
+  place_id: string;
+};
+
+type LocationResult = {
+  lat: number;
+  lng: number;
+  address: string;
+};
 
 interface LocationPickerProps {
-  mode: 'single' | 'route';
-  initialOrigin?: Location;
-  initialDestination?: Location;
-  onLocationSelect?: (location: Location) => void;
-  onRouteSelect?: (origin: Location, destination: Location) => void;
-  onClose: () => void;
+  height?: number;
+  width?: number;
+  onLocationsSelected?: (origin: LocationResult, destination: LocationResult) => void;
+  initialOrigin?: LocationResult | null;
+  initialDestination?: LocationResult | null;
 }
 
-interface PlaceDetails {
-  place_id: string;
-  description: string;
-  structured_formatting: {
-    main_text: string;
-    secondary_text: string;
-  };
-}
-
-const GOOGLE_MAPS_APIKEY = getGoogleMapsApiKey();
-
-export default function LocationPicker({
-  mode,
-  initialOrigin,
-  initialDestination,
-  onLocationSelect,
-  onRouteSelect,
-  onClose,
-}: LocationPickerProps) {
-  const mapRef = useRef<MapView>(null);
-  const originInputRef = useRef<any>(null);
-  const destinationInputRef = useRef<any>(null);
-
-  // State management
-  const [origin, setOrigin] = useState<Location | null>(initialOrigin || null);
-  const [destination, setDestination] = useState<Location | null>(initialDestination || null);
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+const LocationPicker: React.FC<LocationPickerProps> = ({
+  height = 600,
+  width = Dimensions.get('window').width - 40,
+  onLocationsSelected,
+  initialOrigin = null,
+  initialDestination = null,
+}) => {
+  const [origin, setOrigin] = useState<LocationResult | null>(initialOrigin);
+  const [destination, setDestination] = useState<LocationResult | null>(initialDestination);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<PlaceDetails[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [activeInput, setActiveInput] = useState<'origin' | 'destination' | 'single'>('origin');
-  const [mapRegion, setMapRegion] = useState({
-    latitude: initialOrigin?.lat || 37.78825,
-    longitude: initialOrigin?.lng || -122.4324,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
+  const [predictions, setPredictions] = useState<Place[]>([]);
+  const [routeCoords, setRouteCoords] = useState<Array<{ latitude: number; longitude: number }>>([]);
+  const [loadingRoute, setLoadingRoute] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<Region | null>(null);
+  const [selectionMode, setSelectionMode] = useState<'origin' | 'destination' | null>(null);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const mapRef = useRef<MapView>(null);
 
-  // Update map region when locations change
+  // Get user location for initial region
   useEffect(() => {
-    if (origin && destination && mapRef.current) {
-      // Fit map to show both origin and destination
-      const coordinates = [
-        { latitude: origin.lat, longitude: origin.lng },
-        { latitude: destination.lat, longitude: destination.lng },
-      ];
-      
-      mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-        animated: true,
-      });
-    } else if ((origin || destination || selectedLocation) && mapRef.current) {
-      const location = origin || destination || selectedLocation;
-      if (location) {
-        mapRef.current.animateToRegion({
-          latitude: location.lat,
-          longitude: location.lng,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        });
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError('Location permission denied');
+        return;
       }
-    }
-  }, [origin, destination, selectedLocation]);
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+    })();
+  }, []);
 
-  // Search for places using Google Places API
-  const searchPlaces = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
+  // Fetch predictions for search
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setPredictions([]);
       return;
     }
-
-    setIsSearching(true);
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
-          query
-        )}&key=${GOOGLE_MAPS_APIKEY}&components=country:lk` // Restrict to Sri Lanka, change as needed
-      );
-      
-      const data = await response.json();
-      
-      if (data.status === 'OK') {
-        setSearchResults(data.predictions || []);
-      } else {
-        console.error('Places API error:', data.status);
-        setSearchResults([]);
+    const fetchPredictions = async () => {
+      try {
+        const res = await fetch(
+          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(searchQuery)}&key=${GOOGLE_MAPS_API_KEY}`
+        );
+        const json = await res.json();
+        setPredictions(json.predictions || []);
+      } catch (e) {
+        setPredictions([]);
       }
-    } catch (error) {
-      console.error('Error searching places:', error);
-      setSearchResults([]);
-    }
-    setIsSearching(false);
-  };
+    };
+    fetchPredictions();
+  }, [searchQuery]);
 
-  // Get place details and coordinates
-  const getPlaceDetails = async (placeId: string): Promise<Location | null> => {
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,formatted_address&key=${GOOGLE_MAPS_APIKEY}`
-      );
-      
-      const data = await response.json();
-      
-      if (data.status === 'OK' && data.result) {
-        const { geometry, formatted_address } = data.result;
-        return {
-          lat: geometry.location.lat,
-          lng: geometry.location.lng,
-          address: formatted_address,
-        };
-      }
-    } catch (error) {
-      console.error('Error getting place details:', error);
-    }
-    return null;
-  };
-
-  // Handle place selection from search results
-  const handlePlaceSelect = async (place: PlaceDetails) => {
-    const location = await getPlaceDetails(place.place_id);
-    if (!location) return;
-
-    if (mode === 'single') {
-      setSelectedLocation(location);
-      setSearchQuery('');
-      setSearchResults([]);
+  // Fetch route when both origin and destination are set
+  // Only fetch route when both are set, but do not call onLocationsSelected automatically
+  useEffect(() => {
+    if (origin && destination) {
+      fetchRoute();
     } else {
-      // Route mode
-      if (activeInput === 'origin') {
-        setOrigin(location);
-        setActiveInput('destination');
-        // Clear search and focus destination input
-        setSearchQuery('');
-        setSearchResults([]);
-        setTimeout(() => destinationInputRef.current?.focus(), 100);
-      } else {
-        setDestination(location);
-        setSearchQuery('');
-        setSearchResults([]);
-      }
+      setRouteCoords([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origin, destination]);
+
+  const fetchPlaceDetails = async (placeId: string): Promise<LocationResult | null> => {
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${GOOGLE_MAPS_API_KEY}`
+      );
+      const json = await res.json();
+      const loc = json.result.geometry.location;
+      return {
+        lat: loc.lat,
+        lng: loc.lng,
+        address: json.result.formatted_address,
+      };
+    } catch (e) {
+      return null;
     }
   };
 
-  // Handle map press for coordinate selection
-  const handleMapPress = (event: any) => {
+  const fetchRoute = async () => {
+    if (!origin || !destination) return;
+    setLoadingRoute(true);
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&key=${GOOGLE_MAPS_API_KEY}`
+      );
+      const json = await res.json();
+      if (json.routes && json.routes.length > 0) {
+        const points = decodePolyline(json.routes[0].overview_polyline.points);
+        setRouteCoords(points);
+        // Fit map to route
+        setTimeout(() => {
+          mapRef.current?.fitToCoordinates(points, {
+            edgePadding: { top: 60, bottom: 60, left: 60, right: 60 },
+            animated: true,
+          });
+        }, 500);
+      } else {
+        setRouteCoords([]);
+      }
+    } catch (e) {
+      setRouteCoords([]);
+    }
+    setLoadingRoute(false);
+  };
+
+  // Polyline decoder (Google encoded polyline algorithm)
+  function decodePolyline(encoded: string) {
+    let points = [];
+    let index = 0, len = encoded.length;
+    let lat = 0, lng = 0;
+    while (index < len) {
+      let b, shift = 0, result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+      points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+    }
+    return points;
+  }
+
+  const handlePlaceSelect = async (place: Place) => {
+    setPredictions([]);
+    Keyboard.dismiss();
+    const details = await fetchPlaceDetails(place.place_id);
+    if (details) {
+      if (selectionMode === 'origin') {
+        setOrigin(details);
+      } else if (selectionMode === 'destination') {
+        setDestination(details);
+      }
+      setSelectionMode(null);
+      setSearchQuery('');
+      setShowInstructions(false);
+    }
+  };
+
+  const handleMapPress = async (event: any) => {
+    if (!selectionMode) return;
+    
     const { latitude, longitude } = event.nativeEvent.coordinate;
     
-    // Reverse geocode to get address
-    reverseGeocode(latitude, longitude).then((address) => {
-      const location: Location = {
+    try {
+      // Reverse geocoding to get address
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}`
+      );
+      const json = await res.json();
+      
+      const address = json.results && json.results.length > 0 
+        ? json.results[0].formatted_address 
+        : `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+      
+      const locationResult: LocationResult = {
         lat: latitude,
         lng: longitude,
-        address: address || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+        address: address,
       };
-
-      if (mode === 'single') {
-        setSelectedLocation(location);
-      } else {
-        // Route mode
-        if (activeInput === 'origin') {
-          setOrigin(location);
-          setActiveInput('destination');
-        } else {
-          setDestination(location);
-        }
-      }
-    });
-  };
-
-  // Reverse geocoding to get address from coordinates
-  const reverseGeocode = async (lat: number, lng: number): Promise<string | null> => {
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_APIKEY}`
-      );
       
-      const data = await response.json();
-      
-      if (data.status === 'OK' && data.results.length > 0) {
-        return data.results[0].formatted_address;
+      if (selectionMode === 'origin') {
+        setOrigin(locationResult);
+      } else if (selectionMode === 'destination') {
+        setDestination(locationResult);
       }
+      
+      setSelectionMode(null);
+      setShowInstructions(false);
     } catch (error) {
-      console.error('Error reverse geocoding:', error);
-    }
-    return null;
-  };
-
-  // Handle confirm button press
-  const handleConfirm = () => {
-    if (mode === 'single' && selectedLocation && onLocationSelect) {
-      onLocationSelect(selectedLocation);
-    } else if (mode === 'route' && origin && destination && onRouteSelect) {
-      onRouteSelect(origin, destination);
-    } else {
-      Alert.alert('Incomplete Selection', `Please select ${mode === 'single' ? 'a location' : 'both origin and destination'}.`);
-      return;
-    }
-    onClose();
-  };
-
-  // Swap origin and destination
-  const swapLocations = () => {
-    if (origin && destination) {
-      const temp = origin;
-      setOrigin(destination);
-      setDestination(temp);
+      console.error('Error getting address:', error);
+      // Fallback to coordinates
+      const locationResult: LocationResult = {
+        lat: latitude,
+        lng: longitude,
+        address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+      };
+      
+      if (selectionMode === 'origin') {
+        setOrigin(locationResult);
+      } else if (selectionMode === 'destination') {
+        setDestination(locationResult);
+      }
+      
+      setSelectionMode(null);
+      setShowInstructions(false);
     }
   };
 
-  // Clear all selections
+  const startLocationSelection = (mode: 'origin' | 'destination') => {
+    setSelectionMode(mode);
+    setSearchQuery('');
+    setPredictions([]);
+    setShowInstructions(true);
+  };
+
+  const cancelSelection = () => {
+    setSelectionMode(null);
+    setSearchQuery('');
+    setPredictions([]);
+    setShowInstructions(false);
+  };
+
   const clearAll = () => {
     setOrigin(null);
     setDestination(null);
-    setSelectedLocation(null);
     setSearchQuery('');
-    setSearchResults([]);
-    setActiveInput('origin');
+    setPredictions([]);
+    setRouteCoords([]);
+    setSelectionMode(null);
+    setShowInstructions(false);
   };
 
-  const renderSearchResults = () => {
-    if (searchResults.length === 0) return null;
-
-    return (
-      <View style={styles.searchResultsContainer}>
-        <FlatList
-          data={searchResults}
-          keyExtractor={(item) => item.place_id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.searchResultItem}
-              onPress={() => handlePlaceSelect(item)}
-            >
-              <MapPin size={16} color={Colors.neutral[500]} />
-              <View style={styles.resultTextContainer}>
-                <Text style={styles.resultMainText}>{item.structured_formatting.main_text}</Text>
-                <Text style={styles.resultSecondaryText}>{item.structured_formatting.secondary_text}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
-    );
-  };
+  // Helper to convert LocationResult to { latitude, longitude }
+  const toLatLng = (loc: LocationResult | null) =>
+    loc ? { latitude: loc.lat, longitude: loc.lng } : undefined;
 
   return (
-    <Modal
-      visible={true}
-      animationType="slide"
-      presentationStyle="fullScreen"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView 
-          style={styles.container} 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <X size={24} color={Colors.neutral[700]} />
+    <View style={[styles.container, { height, width }]}> 
+      {/* Location Selection Controls */}
+      <View style={styles.searchContainer}>
+        {!selectionMode ? (
+          <>
+            {/* Origin Button */}
+            <TouchableOpacity
+              style={[styles.locationButton, origin && styles.selectedLocationButton]}
+              onPress={() => startLocationSelection('origin')}
+            >
+              <Text style={[styles.locationButtonLabel, origin && styles.selectedLocationLabel]}>
+                Origin:
+              </Text>
+              <Text style={[styles.locationButtonText, !origin && styles.placeholderText]} numberOfLines={2}>
+                {origin ? origin.address : 'Tap to select origin'}
+              </Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>
-              {mode === 'single' ? 'Select Location' : 'Select Route'}
-            </Text>
-            <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
-              <RotateCcw size={20} color={Colors.neutral[600]} />
+
+            {/* Destination Button */}
+            <TouchableOpacity
+              style={[styles.locationButton, destination && styles.selectedLocationButton]}
+              onPress={() => startLocationSelection('destination')}
+            >
+              <Text style={[styles.locationButtonLabel, destination && styles.selectedLocationLabel]}>
+                Destination:
+              </Text>
+              <Text style={[styles.locationButtonText, !destination && styles.placeholderText]} numberOfLines={2}>
+                {destination ? destination.address : 'Tap to select destination'}
+              </Text>
             </TouchableOpacity>
-          </View>
 
-          {/* Search Input(s) */}
-          <View style={styles.searchContainer}>
-            {mode === 'route' ? (
-              <>
-                {/* Origin Input */}
-                <View style={[styles.inputContainer, activeInput === 'origin' && styles.activeInput]}>
-                  <View style={styles.inputIcon}>
-                    <View style={[styles.locationDot, styles.originDot]} />
-                  </View>
-                  <TextInput
-                    ref={originInputRef}
-                    style={styles.searchInput}
-                    placeholder="From where?"
-                    value={origin ? origin.address : searchQuery}
-                    onChangeText={(text) => {
-                      setSearchQuery(text);
-                      searchPlaces(text);
-                      setActiveInput('origin');
-                    }}
-                    onFocus={() => setActiveInput('origin')}
-                  />
-                  {origin && (
-                    <TouchableOpacity onPress={() => setOrigin(null)}>
-                      <X size={16} color={Colors.neutral[500]} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                {/* Swap Button */}
-                <TouchableOpacity style={styles.swapButton} onPress={swapLocations}>
-                  <RotateCcw size={16} color={Colors.primary[600]} />
+            {/* Action Buttons */}
+            <View style={styles.actionButtonsRow}>
+              {(origin || destination) && (
+                <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
+                  <Text style={styles.clearButtonText}>Clear All</Text>
                 </TouchableOpacity>
-
-                {/* Destination Input */}
-                <View style={[styles.inputContainer, activeInput === 'destination' && styles.activeInput]}>
-                  <View style={styles.inputIcon}>
-                    <View style={[styles.locationDot, styles.destinationDot]} />
-                  </View>
-                  <TextInput
-                    ref={destinationInputRef}
-                    style={styles.searchInput}
-                    placeholder="To where?"
-                    value={destination ? destination.address : (activeInput === 'destination' ? searchQuery : '')}
-                    onChangeText={(text) => {
-                      setSearchQuery(text);
-                      searchPlaces(text);
-                      setActiveInput('destination');
-                    }}
-                    onFocus={() => setActiveInput('destination')}
-                  />
-                  {destination && (
-                    <TouchableOpacity onPress={() => setDestination(null)}>
-                      <X size={16} color={Colors.neutral[500]} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </>
-            ) : (
-              /* Single Location Input */
-              <View style={[styles.inputContainer, styles.activeInput]}>
-                <Search size={20} color={Colors.neutral[500]} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search for a location..."
-                  value={selectedLocation ? selectedLocation.address : searchQuery}
-                  onChangeText={(text) => {
-                    setSearchQuery(text);
-                    searchPlaces(text);
+              )}
+              {origin && destination && (
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={() => {
+                    if (onLocationsSelected) onLocationsSelected(origin, destination);
                   }}
-                />
-                {selectedLocation && (
-                  <TouchableOpacity onPress={() => setSelectedLocation(null)}>
-                    <X size={16} color={Colors.neutral[500]} />
-                  </TouchableOpacity>
-                )}
+                >
+                  <Text style={styles.confirmButtonText}>Confirm Route</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Instructions */}
+            {showInstructions && (
+              <View style={styles.instructionsContainer}>
+                <Text style={styles.instructionsTitle}>
+                  Select {selectionMode === 'origin' ? 'Origin' : 'Destination'}
+                </Text>
+                <Text style={styles.instructionsText}>
+                  Search below or tap on the map to select a location
+                </Text>
               </View>
             )}
-          </View>
 
-          {/* Search Results */}
-          {renderSearchResults()}
+            {/* Search Input */}
+            <TextInput
+              style={styles.searchInput}
+              placeholder={`Search for ${selectionMode}...`}
+              placeholderTextColor="#666"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
 
-          {/* Map */}
-          <View style={styles.mapContainer}>
-            <MapView
-              ref={mapRef}
-              style={styles.map}
-              provider={PROVIDER_GOOGLE}
-              initialRegion={mapRegion}
-              onPress={handleMapPress}
-              showsUserLocation={true}
-              showsMyLocationButton={true}
-            >
-              {/* Origin Marker */}
-              {origin && (
-                <Marker
-                  coordinate={{ latitude: origin.lat, longitude: origin.lng }}
-                  title="Origin"
-                  description={origin.address}
-                  pinColor={Colors.success[500]}
-                />
-              )}
+            {/* Search Predictions */}
+            {predictions.length > 0 && (
+              <FlatList
+                data={predictions}
+                keyExtractor={item => item.place_id}
+                style={styles.predictionsList}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.predictionItem} onPress={() => handlePlaceSelect(item)}>
+                    <Text style={styles.predictionText}>{item.description}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
 
-              {/* Destination Marker */}
-              {destination && (
-                <Marker
-                  coordinate={{ latitude: destination.lat, longitude: destination.lng }}
-                  title="Destination"
-                  description={destination.address}
-                  pinColor={Colors.error[500]}
-                />
-              )}
-
-              {/* Single Location Marker */}
-              {selectedLocation && mode === 'single' && (
-                <Marker
-                  coordinate={{ latitude: selectedLocation.lat, longitude: selectedLocation.lng }}
-                  title="Selected Location"
-                  description={selectedLocation.address}
-                  pinColor={Colors.primary[500]}
-                />
-              )}
-
-              {/* Route Directions */}
-              {origin && destination && (
-                <MapViewDirections
-                  origin={{ latitude: origin.lat, longitude: origin.lng }}
-                  destination={{ latitude: destination.lat, longitude: destination.lng }}
-                  apikey={GOOGLE_MAPS_APIKEY}
-                  strokeWidth={4}
-                  strokeColor={Colors.primary[600]}
-                  optimizeWaypoints={true}
-                  onError={(errorMessage) => {
-                    console.error('Directions error:', errorMessage);
-                  }}
-                />
-              )}
-            </MapView>
-
-            {/* Map Instructions */}
-            <View style={styles.mapInstructions}>
-              <Text style={styles.instructionsText}>
-                {mode === 'single' 
-                  ? 'Tap on the map or search to select a location'
-                  : `Select ${activeInput} location by tapping the map or searching`
-                }
-              </Text>
-            </View>
-          </View>
-
-          {/* Confirm Button */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[
-                styles.confirmButton,
-                (mode === 'single' ? !selectedLocation : !origin || !destination) && styles.disabledButton
-              ]}
-              onPress={handleConfirm}
-              disabled={mode === 'single' ? !selectedLocation : !origin || !destination}
-            >
-              <Check size={20} color={Colors.white} />
-              <Text style={styles.confirmButtonText}>
-                {mode === 'single' ? 'Confirm Location' : 'Confirm Route'}
-              </Text>
+            {/* Cancel Button */}
+            <TouchableOpacity style={styles.cancelButton} onPress={cancelSelection}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
+          </>
+        )}
+      </View>
+
+      {/* Map */}
+      <View style={styles.mapContainer}>
+        <MapView
+          ref={mapRef}
+          provider={PROVIDER_GOOGLE}
+          style={styles.map}
+          initialRegion={
+            origin
+              ? {
+                  latitude: origin.lat,
+                  longitude: origin.lng,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
+                }
+              : userLocation || {
+                  latitude: 6.9271,
+                  longitude: 79.8612,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421,
+                }
+          }
+          showsUserLocation
+          onPress={handleMapPress}
+        >
+          {/* Show origin marker if origin is set */}
+          {origin && (
+            <Marker
+              coordinate={toLatLng(origin)!}
+              title="Origin"
+              pinColor="#2196f3"
+            />
+          )}
+          {/* Show destination marker if destination is set */}
+          {destination && (
+            <Marker
+              coordinate={toLatLng(destination)!}
+              title="Destination"
+              pinColor="#e91e63"
+            />
+          )}
+          {/* Show route polyline if available */}
+          {routeCoords.length > 0 && (
+            <Polyline
+              coordinates={routeCoords.map(p => ({ latitude: p.latitude, longitude: p.longitude }))}
+              strokeColor="#2196f3"
+              strokeWidth={4}
+            />
+          )}
+        </MapView>
+        {loadingRoute && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#2196f3" />
           </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </Modal>
+        )}
+        
+        {/* Selection Mode Overlay */}
+        {selectionMode && (
+          <View style={styles.selectionOverlay}>
+            <Text style={styles.selectionOverlayText}>
+              Tap on the map to select {selectionMode}
+            </Text>
+          </View>
+        )}
+      </View>
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  header: {
-    flexDirection: 'row',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginVertical: 8,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[200],
-  },
-  closeButton: {
-    padding: Spacing.sm,
-  },
-  headerTitle: {
-    fontSize: Typography.sizes.lg,
-    fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
-  },
-  clearButton: {
-    padding: Spacing.sm,
+    padding: 0,
   },
   searchContainer: {
-    backgroundColor: Colors.white,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[200],
+    width: '100%',
+    padding: 15,
+    backgroundColor: '#fff',
+    zIndex: 2,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.neutral[50],
-    borderWidth: 1,
-    borderColor: Colors.neutral[200],
+  locationButton: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 2,
+    borderColor: '#e9ecef',
     borderRadius: 12,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    marginBottom: Spacing.sm,
+    padding: 15,
+    marginBottom: 10,
+    borderStyle: 'dashed',
   },
-  activeInput: {
-    borderColor: Colors.primary[600],
-    backgroundColor: Colors.primary[50],
+  selectedLocationButton: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#2196f3',
+    borderStyle: 'solid',
   },
-  inputIcon: {
-    marginRight: Spacing.sm,
+  locationButtonLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6c757d',
+    marginBottom: 4,
+    textTransform: 'uppercase',
   },
-  locationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  selectedLocationLabel: {
+    color: '#2196f3',
   },
-  originDot: {
-    backgroundColor: Colors.success[500],
+  locationButtonText: {
+    fontSize: 16,
+    color: '#212529',
+    lineHeight: 20,
   },
-  destinationDot: {
-    backgroundColor: Colors.error[500],
+  placeholderText: {
+    color: '#6c757d',
+    fontStyle: 'italic',
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+  },
+  clearButton: {
+    backgroundColor: '#6c757d',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  confirmButton: {
+    backgroundColor: '#2196f3',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flex: 2,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  instructionsContainer: {
+    backgroundColor: '#fff3cd',
+    borderColor: '#ffeaa7',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+  },
+  instructionsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#856404',
+    marginBottom: 4,
+  },
+  instructionsText: {
+    fontSize: 14,
+    color: '#856404',
   },
   searchInput: {
-    flex: 1,
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[900],
-    paddingVertical: Spacing.xs,
-  },
-  swapButton: {
-    alignSelf: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: '#f8f9fa',
     borderWidth: 1,
-    borderColor: Colors.primary[600],
-    borderRadius: 16,
-    padding: Spacing.xs,
-    marginVertical: Spacing.xs,
+    borderColor: '#dee2e6',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#212529',
+    marginBottom: 10,
   },
-  searchResultsContainer: {
-    backgroundColor: Colors.white,
+  predictionsList: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    maxHeight: 150,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  predictionItem: {
+    padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[200],
-    maxHeight: 200,
+    borderBottomColor: '#f8f9fa',
   },
-  searchResultItem: {
-    flexDirection: 'row',
+  predictionText: {
+    fontSize: 15,
+    color: '#212529',
+  },
+  cancelButton: {
+    backgroundColor: '#dc3545',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[100],
+    marginTop: 10,
   },
-  resultTextContainer: {
-    flex: 1,
-    marginLeft: Spacing.sm,
-  },
-  resultMainText: {
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Medium',
-    color: Colors.neutral[900],
-  },
-  resultSecondaryText: {
-    fontSize: Typography.sizes.sm,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
-    marginTop: 2,
+  cancelButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
   mapContainer: {
     flex: 1,
+    width: '100%',
+    height: '100%',
+    minHeight: 400,
+    maxHeight: 600,
     position: 'relative',
+    zIndex: 1,
   },
   map: {
-    flex: 1,
+    width: '100%',
+    height: '100%',
+    minHeight: 400,
+    maxHeight: 600,
   },
-  mapInstructions: {
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  selectionOverlay: {
     position: 'absolute',
-    top: Spacing.lg,
-    left: Spacing.lg,
-    right: Spacing.lg,
-    backgroundColor: Colors.white,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(33, 150, 243, 0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 8,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    zIndex: 5,
   },
-  instructionsText: {
-    fontSize: Typography.sizes.sm,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+  selectionOverlayText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
   },
-  footer: {
-    backgroundColor: Colors.white,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.neutral[200],
-  },
-  confirmButton: {
-    backgroundColor: Colors.primary[600],
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    borderRadius: 12,
-    gap: Spacing.sm,
-  },
-  confirmButtonText: {
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Bold',
-    color: Colors.white,
-  },
-  disabledButton: {
-    backgroundColor: Colors.neutral[300],
+  errorText: {
+    color: '#e53935',
+    textAlign: 'center',
+    padding: 8,
+    fontSize: 15,
   },
 });
+
+export default LocationPicker;
