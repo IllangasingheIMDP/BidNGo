@@ -62,7 +62,7 @@ const GeneralMapView: React.FC<GeneralMapViewProps> = ({
     <View style={[styles.container, { height, width }]}>
       <MapView
         ref={mapRef}
-       
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={
           userLocation || {
