@@ -291,7 +291,7 @@ export default function TripCreationScreen() {
         {showRoutePicker && (
           <Modal visible transparent animationType="slide">
             <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
-              <View style={{ backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', width: '95%', maxWidth: 500 }}>
+              <View style={{ backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', width: '95%', maxWidth: 500, height: '85%' }}>
                 <LocationPicker
                   initialOrigin={formData.origin}
                   initialDestination={formData.destination}
@@ -299,7 +299,7 @@ export default function TripCreationScreen() {
                     setFormData(fd => ({ ...fd, origin, destination }));
                     setShowRoutePicker(false);
                   }}
-                  height={400}
+                  height={600}
                 />
                 <TouchableOpacity style={{ padding: 16, alignItems: 'center' }} onPress={() => setShowRoutePicker(false)}>
                   <Text style={{ color: '#e53935', fontWeight: 'bold' }}>Cancel</Text>
