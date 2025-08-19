@@ -27,7 +27,7 @@ interface LocationPickerProps {
 }
 
 const LocationPicker: React.FC<LocationPickerProps> = ({
-  height = 350,
+  height = 600,
   width = Dimensions.get('window').width - 40,
   onLocationsSelected,
   initialOrigin = null,
@@ -221,6 +221,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         <TextInput
           style={styles.input}
           placeholder="Search origin..."
+          placeholderTextColor="#000"
           value={originQuery}
           onChangeText={text => {
             setOriginQuery(text);
@@ -242,6 +243,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         <TextInput
           style={styles.input}
           placeholder="Search destination..."
+          placeholderTextColor="#000"
           value={destinationQuery}
           onChangeText={text => {
             setDestinationQuery(text);
@@ -352,12 +354,14 @@ const styles = StyleSheet.create({
   searchContainer: {
     width: '100%',
     padding: 10,
+    
     backgroundColor: '#fff',
     zIndex: 2,
   },
   input: {
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
+    color:"#000",
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 6,
@@ -388,16 +392,16 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    minHeight: 200,
-    maxHeight: 350,
+    minHeight: 400,
+    maxHeight: 600,
     position: 'relative',
     zIndex: 1,
   },
   map: {
     width: '100%',
     height: '100%',
-    minHeight: 200,
-    maxHeight: 350,
+    minHeight: 400,
+    maxHeight: 600,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
