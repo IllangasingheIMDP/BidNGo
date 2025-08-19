@@ -35,14 +35,14 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
 }) => {
   const [origin, setOrigin] = useState<LocationResult | null>(initialOrigin);
   const [destination, setDestination] = useState<LocationResult | null>(initialDestination);
-  const [originQuery, setOriginQuery] = useState('');
-  const [destinationQuery, setDestinationQuery] = useState('');
-  const [originPredictions, setOriginPredictions] = useState<Place[]>([]);
-  const [destinationPredictions, setDestinationPredictions] = useState<Place[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [predictions, setPredictions] = useState<Place[]>([]);
   const [routeCoords, setRouteCoords] = useState<Array<{ latitude: number; longitude: number }>>([]);
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<Region | null>(null);
+  const [selectionMode, setSelectionMode] = useState<'origin' | 'destination' | null>(null);
+  const [showInstructions, setShowInstructions] = useState(false);
   const mapRef = useRef<MapView>(null);
 
   // Get user location for initial region
@@ -63,45 +63,25 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     })();
   }, []);
 
-  // Fetch predictions for origin
+  // Fetch predictions for search
   useEffect(() => {
-    if (originQuery.length < 2) {
-      setOriginPredictions([]);
+    if (searchQuery.length < 2) {
+      setPredictions([]);
       return;
     }
     const fetchPredictions = async () => {
       try {
         const res = await fetch(
-          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(originQuery)}&key=${GOOGLE_MAPS_API_KEY}`
+          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(searchQuery)}&key=${GOOGLE_MAPS_API_KEY}`
         );
         const json = await res.json();
-        setOriginPredictions(json.predictions || []);
+        setPredictions(json.predictions || []);
       } catch (e) {
-        setOriginPredictions([]);
+        setPredictions([]);
       }
     };
     fetchPredictions();
-  }, [originQuery]);
-
-  // Fetch predictions for destination
-  useEffect(() => {
-    if (destinationQuery.length < 2) {
-      setDestinationPredictions([]);
-      return;
-    }
-    const fetchPredictions = async () => {
-      try {
-        const res = await fetch(
-          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(destinationQuery)}&key=${GOOGLE_MAPS_API_KEY}`
-        );
-        const json = await res.json();
-        setDestinationPredictions(json.predictions || []);
-      } catch (e) {
-        setDestinationPredictions([]);
-      }
-    };
-    fetchPredictions();
-  }, [destinationQuery]);
+  }, [searchQuery]);
 
   // Fetch route when both origin and destination are set
   // Only fetch route when both are set, but do not call onLocationsSelected automatically
@@ -186,28 +166,94 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     return points;
   }
 
-  const handleOriginSelect = async (place: Place) => {
-    setOriginQuery(place.description);
-    setOriginPredictions([]);
+  const handlePlaceSelect = async (place: Place) => {
+    setPredictions([]);
     Keyboard.dismiss();
     const details = await fetchPlaceDetails(place.place_id);
-    if (details) setOrigin(details);
+    if (details) {
+      if (selectionMode === 'origin') {
+        setOrigin(details);
+      } else if (selectionMode === 'destination') {
+        setDestination(details);
+      }
+      setSelectionMode(null);
+      setSearchQuery('');
+      setShowInstructions(false);
+    }
   };
 
-  const handleDestinationSelect = async (place: Place) => {
-    setDestinationQuery(place.description);
-    setDestinationPredictions([]);
-    Keyboard.dismiss();
-    const details = await fetchPlaceDetails(place.place_id);
-    if (details) setDestination(details);
+  const handleMapPress = async (event: any) => {
+    if (!selectionMode) return;
+    
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    
+    try {
+      // Reverse geocoding to get address
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}`
+      );
+      const json = await res.json();
+      
+      const address = json.results && json.results.length > 0 
+        ? json.results[0].formatted_address 
+        : `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+      
+      const locationResult: LocationResult = {
+        lat: latitude,
+        lng: longitude,
+        address: address,
+      };
+      
+      if (selectionMode === 'origin') {
+        setOrigin(locationResult);
+      } else if (selectionMode === 'destination') {
+        setDestination(locationResult);
+      }
+      
+      setSelectionMode(null);
+      setShowInstructions(false);
+    } catch (error) {
+      console.error('Error getting address:', error);
+      // Fallback to coordinates
+      const locationResult: LocationResult = {
+        lat: latitude,
+        lng: longitude,
+        address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+      };
+      
+      if (selectionMode === 'origin') {
+        setOrigin(locationResult);
+      } else if (selectionMode === 'destination') {
+        setDestination(locationResult);
+      }
+      
+      setSelectionMode(null);
+      setShowInstructions(false);
+    }
+  };
+
+  const startLocationSelection = (mode: 'origin' | 'destination') => {
+    setSelectionMode(mode);
+    setSearchQuery('');
+    setPredictions([]);
+    setShowInstructions(true);
+  };
+
+  const cancelSelection = () => {
+    setSelectionMode(null);
+    setSearchQuery('');
+    setPredictions([]);
+    setShowInstructions(false);
   };
 
   const clearAll = () => {
     setOrigin(null);
     setDestination(null);
-    setOriginQuery('');
-    setDestinationQuery('');
+    setSearchQuery('');
+    setPredictions([]);
     setRouteCoords([]);
+    setSelectionMode(null);
+    setShowInstructions(false);
   };
 
   // Helper to convert LocationResult to { latitude, longitude }
@@ -216,69 +262,98 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
 
   return (
     <View style={[styles.container, { height, width }]}> 
-      {/* Search Inputs */}
+      {/* Location Selection Controls */}
       <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Search origin..."
-          placeholderTextColor="#000"
-          value={originQuery}
-          onChangeText={text => {
-            setOriginQuery(text);
-            setOrigin(null);
-          }}
-        />
-        {originPredictions.length > 0 && (
-          <FlatList
-            data={originPredictions}
-            keyExtractor={item => item.place_id}
-            style={styles.predictionsList}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.predictionItem} onPress={() => handleOriginSelect(item)}>
-                <Text>{item.description}</Text>
-              </TouchableOpacity>
+        {!selectionMode ? (
+          <>
+            {/* Origin Button */}
+            <TouchableOpacity
+              style={[styles.locationButton, origin && styles.selectedLocationButton]}
+              onPress={() => startLocationSelection('origin')}
+            >
+              <Text style={[styles.locationButtonLabel, origin && styles.selectedLocationLabel]}>
+                Origin:
+              </Text>
+              <Text style={[styles.locationButtonText, !origin && styles.placeholderText]} numberOfLines={2}>
+                {origin ? origin.address : 'Tap to select origin'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Destination Button */}
+            <TouchableOpacity
+              style={[styles.locationButton, destination && styles.selectedLocationButton]}
+              onPress={() => startLocationSelection('destination')}
+            >
+              <Text style={[styles.locationButtonLabel, destination && styles.selectedLocationLabel]}>
+                Destination:
+              </Text>
+              <Text style={[styles.locationButtonText, !destination && styles.placeholderText]} numberOfLines={2}>
+                {destination ? destination.address : 'Tap to select destination'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Action Buttons */}
+            <View style={styles.actionButtonsRow}>
+              {(origin || destination) && (
+                <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
+                  <Text style={styles.clearButtonText}>Clear All</Text>
+                </TouchableOpacity>
+              )}
+              {origin && destination && (
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={() => {
+                    if (onLocationsSelected) onLocationsSelected(origin, destination);
+                  }}
+                >
+                  <Text style={styles.confirmButtonText}>Confirm Route</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Instructions */}
+            {showInstructions && (
+              <View style={styles.instructionsContainer}>
+                <Text style={styles.instructionsTitle}>
+                  Select {selectionMode === 'origin' ? 'Origin' : 'Destination'}
+                </Text>
+                <Text style={styles.instructionsText}>
+                  Search below or tap on the map to select a location
+                </Text>
+              </View>
             )}
-          />
-        )}
-        <TextInput
-          style={styles.input}
-          placeholder="Search destination..."
-          placeholderTextColor="#000"
-          value={destinationQuery}
-          onChangeText={text => {
-            setDestinationQuery(text);
-            setDestination(null);
-          }}
-        />
-        {destinationPredictions.length > 0 && (
-          <FlatList
-            data={destinationPredictions}
-            keyExtractor={item => item.place_id}
-            style={styles.predictionsList}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.predictionItem} onPress={() => handleDestinationSelect(item)}>
-                <Text>{item.description}</Text>
-              </TouchableOpacity>
+
+            {/* Search Input */}
+            <TextInput
+              style={styles.searchInput}
+              placeholder={`Search for ${selectionMode}...`}
+              placeholderTextColor="#666"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+
+            {/* Search Predictions */}
+            {predictions.length > 0 && (
+              <FlatList
+                data={predictions}
+                keyExtractor={item => item.place_id}
+                style={styles.predictionsList}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.predictionItem} onPress={() => handlePlaceSelect(item)}>
+                    <Text style={styles.predictionText}>{item.description}</Text>
+                  </TouchableOpacity>
+                )}
+              />
             )}
-          />
-        )}
-        {(origin || destination) && (
-          <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
-            <Text style={{ color: '#fff' }}>Clear</Text>
-          </TouchableOpacity>
-        )}
-        {/* Confirm button: only show if both origin and destination are set */}
-        {origin && destination && (
-          <TouchableOpacity
-            style={[styles.clearButton, { backgroundColor: '#2196f3', marginTop: 8 }]}
-            onPress={() => {
-              if (onLocationsSelected) onLocationsSelected(origin, destination);
-              setOriginPredictions([]);
-              setDestinationPredictions([]);
-            }}
-          >
-            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirm Route</Text>
-          </TouchableOpacity>
+
+            {/* Cancel Button */}
+            <TouchableOpacity style={styles.cancelButton} onPress={cancelSelection}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </>
         )}
       </View>
 
@@ -304,6 +379,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
                 }
           }
           showsUserLocation
+          onPress={handleMapPress}
         >
           {/* Show origin marker if origin is set */}
           {origin && (
@@ -335,6 +411,15 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
             <ActivityIndicator size="large" color="#2196f3" />
           </View>
         )}
+        
+        {/* Selection Mode Overlay */}
+        {selectionMode && (
+          <View style={styles.selectionOverlay}>
+            <Text style={styles.selectionOverlayText}>
+              Tap on the map to select {selectionMode}
+            </Text>
+          </View>
+        )}
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
@@ -353,40 +438,132 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     width: '100%',
-    padding: 10,
-    
+    padding: 15,
     backgroundColor: '#fff',
     zIndex: 2,
   },
-  input: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    color:"#000",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 6,
+  locationButton: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 2,
+    borderColor: '#e9ecef',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 10,
+    borderStyle: 'dashed',
+  },
+  selectedLocationButton: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#2196f3',
+    borderStyle: 'solid',
+  },
+  locationButtonLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6c757d',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  selectedLocationLabel: {
+    color: '#2196f3',
+  },
+  locationButtonText: {
     fontSize: 16,
+    color: '#212529',
+    lineHeight: 20,
+  },
+  placeholderText: {
+    color: '#6c757d',
+    fontStyle: 'italic',
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+  },
+  clearButton: {
+    backgroundColor: '#6c757d',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  confirmButton: {
+    backgroundColor: '#2196f3',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flex: 2,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  instructionsContainer: {
+    backgroundColor: '#fff3cd',
+    borderColor: '#ffeaa7',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+  },
+  instructionsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#856404',
+    marginBottom: 4,
+  },
+  instructionsText: {
+    fontSize: 14,
+    color: '#856404',
+  },
+  searchInput: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#212529',
+    marginBottom: 10,
   },
   predictionsList: {
     backgroundColor: '#fff',
     borderRadius: 8,
-    maxHeight: 120,
-    marginBottom: 6,
+    maxHeight: 150,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: '#dee2e6',
   },
   predictionItem: {
-    padding: 10,
+    padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#f8f9fa',
   },
-  clearButton: {
-    backgroundColor: '#888',
-    alignSelf: 'flex-end',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  predictionText: {
+    fontSize: 15,
+    color: '#212529',
+  },
+  cancelButton: {
+    backgroundColor: '#dc3545',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 8,
-    marginTop: 4,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
   mapContainer: {
     flex: 1,
@@ -409,6 +586,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+  },
+  selectionOverlay: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(33, 150, 243, 0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    zIndex: 5,
+  },
+  selectionOverlayText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   errorText: {
     color: '#e53935',
