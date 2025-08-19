@@ -13,12 +13,12 @@ configurable int port = 5432;
 
 
 // SSL configuration for Supabase
-postgresql:Options postgresqlOptions = {
-    ssl: {
-        mode: postgresql:REQUIRE
-    }
-};
+// postgresql:Options postgresqlOptions = {
+//     ssl: {
+//         mode: postgresql:REQUIRE
+//     }    
+// };
 
 // `final` ensures only one connection is used
 public final postgresql:Client dbClient = check new (username = dbUsername, 
-                password = dbPassword, database = dbName, host = host, port = port, options = postgresqlOptions);
+                password = dbPassword, database = dbName, host = host, port = port, connectionPool = { maxOpenConnections: 1 });
