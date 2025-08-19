@@ -12,19 +12,28 @@ export default function ProfileScreen() {
   const [driverProfile, setDriverProfile] = useState<DriverProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
-  if (!user) {
-    router.replace('/(auth)/login');
-    return null;
-  }
+  const isDriver = user?.role === 'driver';
 
-  const isDriver = user.role === 'driver';
+  // Redirect to login if no user
+  useEffect(() => {
+    if (!user && !isRedirecting) {
+      setIsRedirecting(true);
+      router.replace('/(auth)/login');
+    }
+  }, [user, isRedirecting]);
 
   useEffect(() => {
     if (isDriver) {
       loadDriverProfile();
     }
   }, [isDriver]);
+
+  // Don't render anything if no user or redirecting
+  if (!user || isRedirecting) {
+    return null;
+  }
 
   const loadDriverProfile = async () => {
     if (!isDriver) return;
@@ -35,7 +44,8 @@ export default function ProfileScreen() {
       setDriverProfile(profile);
     } catch (error) {
       console.error('Failed to load driver profile:', error);
-      // Driver profile might not exist yet
+      // Driver profile might not exist yet or user might not be fully registered
+      setDriverProfile(null);
     } finally {
       setLoading(false);
     }
@@ -60,7 +70,7 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            router.replace('/(auth)/login');
+            // Don't manually navigate - let the useEffect handle it
           }
         },
       ]
@@ -72,7 +82,7 @@ export default function ProfileScreen() {
     Alert.alert('Complete Profile', 'Driver profile setup will be implemented soon');
   };
 
-  const getVerificationStatusColor = (status: string) => {
+  const getVerificationStatusColor = (status?: string) => {
     switch (status) {
       case 'approved':
         return Colors.success[600];
@@ -84,7 +94,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const getVerificationStatusIcon = (status: string) => {
+  const getVerificationStatusIcon = (status?: string) => {
     switch (status) {
       case 'approved':
         return <CheckCircle size={16} color={Colors.success[600]} />;
@@ -198,7 +208,7 @@ export default function ProfileScreen() {
               <Text style={[styles.roleText, isDriver && styles.driverRole]}>
                 {isDriver ? 'Driver' : 'Passenger'}
               </Text>
-              {isDriver && driverProfile && (
+              {isDriver && driverProfile && driverProfile.verificationStatus && (
                 <View style={[styles.verificationBadge, { backgroundColor: `${getVerificationStatusColor(driverProfile.verificationStatus)}20` }]}>
                   {getVerificationStatusIcon(driverProfile.verificationStatus)}
                   <Text style={[styles.verificationText, { color: getVerificationStatusColor(driverProfile.verificationStatus) }]}>
