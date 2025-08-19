@@ -47,6 +47,7 @@ export default function TabLayout() {
       />
       {isDriver && (
         <Tabs.Screen
+          key="driver-tab"
           name="driver"
           options={{
             title: 'Drive',
