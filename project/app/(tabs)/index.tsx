@@ -61,7 +61,7 @@ export default function HomeScreen() {
   };
 
   const navigateToSearch = () => {
-    router.push('/(tabs)/bookings'); // Navigate to bookings as search placeholder
+    router.push('/passenger/trip_booking');
   };
 
   const navigateToCreateTrip = () => {
@@ -196,13 +196,13 @@ export default function HomeScreen() {
           icon={<MapPin size={24} color={Colors.primary[600]} />}
           title="Popular Routes"
           subtitle="Colombo ↔ Kandy"
-          onPress={() => router.push('/(tabs)/bookings')}
+          onPress={navigateToSearch}
         />
         <QuickSearchCard
           icon={<Clock size={24} color={Colors.secondary[600]} />}
           title="Quick Book"
           subtitle="Next 2 hours"
-          onPress={() => router.push('/(tabs)/bookings')}
+          onPress={navigateToSearch}
         />
       </View>
 

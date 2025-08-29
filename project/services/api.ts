@@ -325,19 +325,12 @@ class ApiService {
       '/api/trips/trips/search',
       { method: 'POST', body: JSON.stringify(payload) }
     );
+    
 
     // Optional client-side filters (date/min_seats/max_price)
-    if (filters.min_seats != null) {
-      results = results.filter(t => t.available_seats >= (filters.min_seats as number));
-    }
-    if (filters.max_price != null) {
-      results = results.filter(t => t.base_price <= (filters.max_price as number));
-    }
-    if (filters.date) {
-      const day = filters.date.slice(0, 10); // YYYY-MM-DD
-      results = results.filter(t => (t.departure_datetime || '').slice(0, 10) === day);
-    }
-
+    
+    
+    
     return results; // has superset fields; assignable to BackendTrip[]
   }
 
