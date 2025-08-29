@@ -12,18 +12,15 @@ configurable int port = 5432;
 
 
 
-// string clientStorePath = "/path/to/keystore.p12";
-
-// postgresql:Options postgresqlOptions = {
-//     ssl: {
-//         mode: postgresql:ALLOW,
-//         key: {
-//             path: clientStorePath,
-//             password: "ballerina"
-//         }
-//     }
-// };
+// SSL configuration for Supabase
+postgresql:Options postgresqlOptions = {
+    ssl: {
+        mode: postgresql:REQUIRE
+    }
+};
 
 // `final` ensures only one connection is used
 public final postgresql:Client dbClient = check new (username = dbUsername, 
+
                 password = dbPassword, database = dbName,host =host,connectionPool = { maxOpenConnections: 1});
+
