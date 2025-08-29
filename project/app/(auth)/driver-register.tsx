@@ -6,7 +6,7 @@ import { Spacing, Typography } from '@/constants/Spacing';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
 
-export default function RegisterScreen() {
+export default function DriverRegisterScreen() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -14,13 +14,12 @@ export default function RegisterScreen() {
     first_name: '',
     last_name: '',
     phone: '',
-    role: 'passenger', // 'passenger' or 'driver'
   });
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
   const handleRegister = async () => {
-    const { email, password, confirmPassword, first_name, last_name, phone, role } = formData;
+    const { email, password, confirmPassword, first_name, last_name, phone } = formData;
 
     if (!email.trim() || !password.trim() || !first_name.trim() || !last_name.trim() || !phone.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
@@ -39,40 +38,21 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      // Use appropriate registration method based on role
-      if (role === 'driver') {
-        await apiService.driverRegisterAsUser({
-          email: email.trim(),
-          password,
-          first_name: first_name.trim(),
-          last_name: last_name.trim(),
-          phone: phone.trim(),
-        });
-      } else {
-        await apiService.register({
-          email: email.trim(),
-          password,
-          first_name: first_name.trim(),
-          last_name: last_name.trim(),
-          phone: phone.trim(),
-        });
-      }
+      // Use the driver registration endpoint
+      await apiService.driverRegisterAsUser({
+        email: email.trim(),
+        password,
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        phone: phone.trim(),
+      });
 
       // After successful registration, login automatically
       const loginResponse = await apiService.login(email.trim(), password);
       await login(loginResponse.token);
       
-      // Redirect based on role
-      if (role === 'driver') {
-        // For drivers, they might need to complete their profile later
-        Alert.alert(
-          'Registration Successful', 
-          'Welcome! You can complete your driver profile from the settings.',
-          [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
-        );
-      } else {
-        router.replace('/(tabs)');
-      }
+      // Navigate to driver registration to complete profile
+      router.replace('/driver/registration');
     } catch (error) {
       Alert.alert('Registration Failed', error instanceof Error ? error.message : 'An error occurred');
     } finally {
@@ -91,49 +71,10 @@ export default function RegisterScreen() {
     >
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join the RideShare community</Text>
+          <Text style={styles.title}>Register as Driver</Text>
+          <Text style={styles.subtitle}>Create your driver account to start offering rides</Text>
 
           <View style={styles.form}>
-            {/* Role Selection */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>I want to register as:</Text>
-              <View style={styles.roleContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.roleButton,
-                    formData.role === 'passenger' && styles.roleButtonActive
-                  ]}
-                  onPress={() => updateField('role', 'passenger')}
-                >
-                  <Text style={[
-                    styles.roleButtonText,
-                    formData.role === 'passenger' && styles.roleButtonTextActive
-                  ]}>
-                    Passenger
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.roleButton,
-                    formData.role === 'driver' && styles.roleButtonActive
-                  ]}
-                  onPress={() => updateField('role', 'driver')}
-                >
-                  <Text style={[
-                    styles.roleButtonText,
-                    formData.role === 'driver' && styles.roleButtonTextActive
-                  ]}>
-                    Driver
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              {formData.role === 'driver' && (
-                <Text style={styles.roleNote}>
-                  Note: You'll need to complete your driver profile after registration
-                </Text>
-              )}
-            </View>
             <View style={styles.nameRow}>
               <View style={styles.nameInput}>
                 <Text style={styles.label}>First Name</Text>
@@ -212,7 +153,7 @@ export default function RegisterScreen() {
               disabled={loading}
             >
               <Text style={styles.buttonText}>
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading ? 'Creating Account...' : 'Create Driver Account'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -227,10 +168,10 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Want to register as driver? </Text>
-            <Link href="/(auth)/driver-register" asChild>
+            <Text style={styles.footerText}>Want to register as passenger? </Text>
+            <Link href="/(auth)/register" asChild>
               <TouchableOpacity>
-                <Text style={styles.footerLink}>Driver Sign Up</Text>
+                <Text style={styles.footerLink}>Passenger Sign Up</Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -268,54 +209,56 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xxxl,
   },
   form: {
+    gap: Spacing.lg,
     marginBottom: Spacing.xl,
   },
   nameRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   nameInput: {
     flex: 1,
+    gap: Spacing.xs,
   },
   inputGroup: {
-    marginBottom: Spacing.lg,
+    gap: Spacing.xs,
   },
   label: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
     color: Colors.neutral[700],
-    marginBottom: Spacing.sm,
   },
   input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: Colors.neutral[300],
-    borderRadius: 8,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
     paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    backgroundColor: Colors.white,
+    color: Colors.neutral[900],
+    borderWidth: 1,
+    borderColor: Colors.neutral[200],
   },
   button: {
-    height: 48,
-    backgroundColor: Colors.primary[600],
-    borderRadius: 8,
-    justifyContent: 'center',
+    backgroundColor: Colors.secondary[600],
+    borderRadius: 12,
+    paddingVertical: Spacing.md,
     alignItems: 'center',
     marginTop: Spacing.lg,
   },
   buttonDisabled: {
-    backgroundColor: Colors.neutral[400],
+    opacity: 0.6,
   },
   buttonText: {
     fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Inter-Bold',
     color: Colors.white,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: Spacing.md,
   },
   footerText: {
     fontSize: Typography.sizes.sm,
@@ -324,40 +267,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: Typography.sizes.sm,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Inter-Bold',
     color: Colors.primary[600],
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  roleButton: {
-    flex: 1,
-    height: 44,
-    borderWidth: 2,
-    borderColor: Colors.neutral[300],
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-  },
-  roleButtonActive: {
-    borderColor: Colors.primary[600],
-    backgroundColor: Colors.primary[50],
-  },
-  roleButtonText: {
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Medium',
-    color: Colors.neutral[600],
-  },
-  roleButtonTextActive: {
-    color: Colors.primary[600],
-  },
-  roleNote: {
-    fontSize: Typography.sizes.xs,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
-    marginTop: Spacing.xs,
-    fontStyle: 'italic',
   },
 });

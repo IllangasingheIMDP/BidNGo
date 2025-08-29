@@ -215,10 +215,12 @@ class ApiService {
   }
 
   async login(email: string, password: string): Promise<AuthResponse> {
+    
     const res = await this.request<AuthResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
+    console.log(res);
     // Store token
     await AsyncStorage.setItem('token', res.token);
     return res;

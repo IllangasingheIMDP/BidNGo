@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, RefreshControl } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { User as UserIcon, Star, Settings, FileText, LogOut, MapPin, CreditCard, Car, Shield, DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { Spacing, Typography } from '@/constants/Spacing';
@@ -28,7 +28,16 @@ export default function ProfileScreen() {
     if (isDriver) {
       loadDriverProfile();
     }
-  }, [isDriver]);
+  }, [isDriver, user]); // Add user as dependency to reload when user changes
+
+  // Refresh driver profile when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isDriver) {
+        loadDriverProfile();
+      }
+    }, [isDriver])
+  );
 
   // Don't render anything if no user or redirecting
   if (!user || isRedirecting) {
@@ -78,8 +87,7 @@ export default function ProfileScreen() {
   };
 
   const handleCompleteProfile = () => {
-    // TODO: Create driver profile setup screen
-    Alert.alert('Complete Profile', 'Driver profile setup will be implemented soon');
+    router.push('/driver/registration');
   };
 
   const getVerificationStatusColor = (status?: string) => {
