@@ -51,4 +51,12 @@ public http:Service TripService = @http:ServiceConfig {} service object {
 		if res is error { check caller->respond({ "error": res.message() }); return; }
 		check caller->respond(res);
 	}
+
+	// Public search endpoint for trips with geospatial matching & ranking
+	resource function post trips/search(http:Caller caller, http:Request req) returns error? {
+		json body = check req.getJsonPayload();
+		TripWithScores[]|error res = searchTrips(body);
+		if res is error { check caller->respond({ "error": res.message() }); return; }
+		check caller->respond(res);
+	}
 };

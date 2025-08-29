@@ -372,10 +372,10 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
                   longitudeDelta: 0.05,
                 }
               : userLocation || {
-                  latitude: 6.9271,
-                  longitude: 79.8612,
-                  latitudeDelta: 0.0922,
-                  longitudeDelta: 0.0421,
+                  latitude: 7.8731,
+                  longitude: 80.7718,
+                  latitudeDelta: 2.5,
+                  longitudeDelta: 2.5,
                 }
           }
           showsUserLocation

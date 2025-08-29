@@ -86,7 +86,7 @@ export default function LoginScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
-          <Link href="/(auth)/register" asChild>
+          <Link href="/(auth)/role-selection" asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Sign Up</Text>
             </TouchableOpacity>

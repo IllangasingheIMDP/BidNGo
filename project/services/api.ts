@@ -58,6 +58,14 @@ export interface BackendTrip {
   driver_user_id: number;
 }
 
+// Backend search result with ranking metrics
+export interface BackendTripSearchResult extends BackendTrip {
+  start_distance_km: number;
+  end_distance_km: number;
+  total_distance_km: number;
+  bearing_diff_deg: number;
+}
+
 // Backend bid representation (from Ballerina DBBid)
 export interface BackendBid {
   id: number;
@@ -215,10 +223,12 @@ class ApiService {
   }
 
   async login(email: string, password: string): Promise<AuthResponse> {
+    
     const res = await this.request<AuthResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
+    console.log(res);
     // Store token
     await AsyncStorage.setItem('token', res.token);
     return res;
@@ -300,10 +310,28 @@ class ApiService {
     return this.request<BackendTrip[]>('/api/trips/trips');
   }
 
-  // Provide a searchTrips facade keeping previous signature; perform client-side filtering where possible
-  async searchTrips(_filters: SearchFilters): Promise<BackendTrip[]> {
-    // Backend ignore filters; fetch all
-    return this.listTrips();
+  // Search trips using backend geospatial ranking (POST /api/trips/trips/search)
+  async searchTrips(filters: SearchFilters): Promise<BackendTrip[]> {
+    const payload = {
+      start_lat: filters.origin.lat,
+      start_lng: filters.origin.lng,
+      start_addr: filters.origin.address,
+      end_lat: filters.destination.lat,
+      end_lng: filters.destination.lng,
+      end_addr: filters.destination.address,
+    };
+
+    let results = await this.request<BackendTripSearchResult[]>(
+      '/api/trips/trips/search',
+      { method: 'POST', body: JSON.stringify(payload) }
+    );
+    
+
+    // Optional client-side filters (date/min_seats/max_price)
+    
+    
+    
+    return results; // has superset fields; assignable to BackendTrip[]
   }
 
   async getTrip(tripId: number): Promise<BackendTrip> {

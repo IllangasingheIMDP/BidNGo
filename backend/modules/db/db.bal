@@ -21,4 +21,6 @@ postgresql:Options postgresqlOptions = {
 
 // `final` ensures only one connection is used
 public final postgresql:Client dbClient = check new (username = dbUsername, 
-                password = dbPassword, database = dbName, host = host, port = port, options = postgresqlOptions);
+
+                password = dbPassword, database = dbName,host =host,connectionPool = { maxOpenConnections: 1});
+
