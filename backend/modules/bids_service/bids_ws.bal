@@ -47,7 +47,7 @@ public isolated function broadcastBidEvent(json event) {
     bidClientRegistry.broadcast(payload);
 }
 
-// Client connects: ws://<host>:8082/ws/bids
+
 service /ws on new websocket:Listener(21003) {
     resource function get .(http:Request req) returns websocket:Service|websocket:UpgradeError {
         return new BidWsService();

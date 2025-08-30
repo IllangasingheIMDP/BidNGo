@@ -129,7 +129,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your Recent Trips</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/driver')}>
+            <TouchableOpacity onPress={() => router.push('/driver/trips_list')}>
               <Text style={styles.seeAll}>Manage all</Text>
             </TouchableOpacity>
           </View>
@@ -150,7 +150,17 @@ export default function HomeScreen() {
           ) : (
             <View style={styles.tripsList}>
               {(myTrips || []).slice(0, 2).map((trip) => (
-                <View key={trip.id} style={styles.tripCard}>
+                <TouchableOpacity 
+                  key={trip.id} 
+                  style={styles.tripCard}
+                  onPress={() => router.push({
+                    pathname: '/driver/trip_handling' as any,
+                    params: {
+                      tripId: trip.id.toString(),
+                      tripData: JSON.stringify(trip),
+                    }
+                  })}
+                >
                   <View style={styles.tripHeader}>
                     <Text style={styles.tripRoute}>
                       {trip.origin_addr} → {trip.dest_addr}
@@ -162,7 +172,8 @@ export default function HomeScreen() {
                     {new Date(trip.departure_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                   <Text style={styles.tripSeats}>{trip.available_seats} seats available</Text>
-                </View>
+                  <Text style={styles.tapHint}>Tap to manage bids</Text>
+                </TouchableOpacity>
               ))}
             </View>
           )}
@@ -471,6 +482,13 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
     color: Colors.secondary[600],
+  },
+  tapHint: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: 'Inter-Regular',
+    color: Colors.primary[600],
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   emptyAction: {
     backgroundColor: Colors.primary[600],

@@ -10,6 +10,8 @@ export default function DriverLayout() {
       <Stack.Screen name="location-picker" />
       <Stack.Screen name="registration" />
       <Stack.Screen name="trip-creation" />
+      <Stack.Screen name="trip_handling" />
+      <Stack.Screen name="trips_list" />
     </Stack>
   );
 }

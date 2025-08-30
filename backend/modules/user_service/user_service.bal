@@ -36,7 +36,7 @@ public http:Service UserService = @http:ServiceConfig {} service object {
     resource function get user/[string email](http:Caller caller, http:Request req) returns error? {
         json|error auth = middleware:validateJWT(req);
         if auth is error {
-            json errBody = { "error": auth.message() };
+            json errBody = { "errore": auth.message() };
             check caller->respond(errBody);
             return;
         }
@@ -103,6 +103,30 @@ public http:Service UserService = @http:ServiceConfig {} service object {
             return;
         }
         check caller->respond(res);
+    }
+    resource function get userbyid/[int id](http:Caller caller, http:Request req) returns error? {
+        json|error auth = middleware:validateJWT(req);
+        if auth is error {
+            json errBody = { "error": auth.message() };
+            check caller->respond(errBody);
+            return;
+        }
+        json|error user = getUserById(id);
+        if user is error {
+            json errBody = { "error": user.message() };
+            check caller->respond(errBody);
+            return;
+        }
+        DBUser u = <DBUser>user;
+        check caller->respond({
+            name: u.name,
+            phone: u.phone,
+            email: u.email,
+            role_flags: u.role_flags,
+            is_verified: u.is_verified,
+            created_at: u.created_at,
+            updated_at: u.updated_at
+        });
     }
 
     // Update password

@@ -17,6 +17,7 @@ public type DBBooking record {|
 |};
 
 public type CreateBookingReq record {|
+	int? user_id = ();
 	int? trip_id = (); // At least one of trip_id or bid_id must be provided
 	int? bid_id = ();
 	decimal fare; // required
@@ -28,7 +29,7 @@ public type UpdateBookingReq record {|
 |};
 
 // Create a booking (passenger only). Basic validation: require fare and either trip_id or bid_id.
-public function createBooking(json data, int passengerId) returns json|error {
+public function createBooking(json data) returns json|error {
 	CreateBookingReq req = check data.cloneWithType(CreateBookingReq);
 
 	if (req.trip_id is ()) && (req.bid_id is ()) { return error("MISSING_TRIP_OR_BID"); }
@@ -54,7 +55,7 @@ public function createBooking(json data, int passengerId) returns json|error {
 
 	// Simple insert. Let DB defaults populate status, payment_method, payment_status & timestamps.
 	sql:ParameterizedQuery q = `INSERT INTO bookings (trip_id, bid_id, passenger_user_id, fare)
-		VALUES (${req.trip_id}, ${req.bid_id}, ${passengerId}, ${req.fare}) RETURNING id`;
+		VALUES (${req.trip_id}, ${req.bid_id}, ${req.user_id}, ${req.fare}) RETURNING id`;
 
 	stream<record {int id;}, error?>|error res = trap db:dbClient->query(q);
 	if res is error { return error("BOOKING_CREATE_FAILED"); }
