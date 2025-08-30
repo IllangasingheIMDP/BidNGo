@@ -205,15 +205,15 @@ export default function HomeScreen() {
       <View style={styles.quickActions}>
         <QuickSearchCard
           icon={<MapPin size={24} color={Colors.primary[600]} />}
-          title="Popular Routes"
-          subtitle="Colombo ↔ Kandy"
+          title="Book a Trip"
+          subtitle="Search and Bid"
           onPress={navigateToSearch}
         />
         <QuickSearchCard
           icon={<Clock size={24} color={Colors.secondary[600]} />}
-          title="Quick Book"
-          subtitle="Next 2 hours"
-          onPress={navigateToSearch}
+          title="My Bookings"
+          subtitle="View & manage"
+          onPress={() => router.push('/passenger/booked')}
         />
       </View>
 
@@ -222,7 +222,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Upcoming Trips</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/bookings')}>
+            <TouchableOpacity onPress={() => router.push('/passenger/booked')}>
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>

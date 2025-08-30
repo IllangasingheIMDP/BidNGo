@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { router, useLocalSearchParams } from 'expo-router';
-import { apiService, BackendTrip, BackendBid } from '../../services/api';
+import { apiService, BackendTrip, BackendBid, BackendBooking } from '../../services/api';
 
 type LocationResult = { lat: number; lng: number; address: string };
 
@@ -39,6 +39,7 @@ export default function TripHandlingScreen() {
 
   // State management
   const [bids, setBids] = useState<BidWithUser[]>([]);
+  const [bookings, setBookings] = useState<BackendBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedBid, setSelectedBid] = useState<BidWithUser | null>(null);
@@ -47,6 +48,7 @@ export default function TripHandlingScreen() {
   const [acceptingBid, setAcceptingBid] = useState<number | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [autoRefreshInterval, setAutoRefreshInterval] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'bids' | 'bookings'>('bids');
 
   // Load bids and establish WebSocket connection
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function TripHandlingScreen() {
     
     const initializeScreen = async () => {
       try {
-        await loadBids();
+        await Promise.all([loadBids(), loadBookings()]);
         if (isMounted) {
           setupWebSocket();
           loadTripRoute();
@@ -91,6 +93,7 @@ export default function TripHandlingScreen() {
     // Set up auto-refresh every 30 seconds as backup
     const interval = setInterval(() => {
       loadBids();
+      loadBookings();
     }, 30000);
     setAutoRefreshInterval(interval);
   }, []);
@@ -111,6 +114,7 @@ export default function TripHandlingScreen() {
     if (event.type === 'bid_placed' || event.type === 'bid_updated' || event.type === 'bid_deleted') {
       if (event.tripId === tripId) {
         loadBids();
+        loadBookings(); // Also refresh bookings as bids can turn into bookings
       }
     }
   }, [tripId]);
@@ -177,6 +181,16 @@ export default function TripHandlingScreen() {
     }
   };
 
+  const loadBookings = async () => {
+    try {
+      const tripBookings = await apiService.listBookingsForTrip(tripId);
+      setBookings(tripBookings);
+    } catch (error: any) {
+      console.error('Error loading bookings:', error);
+      // Don't show error alerts for bookings as it's less critical than bids
+    }
+  };
+
   const loadTripRoute = async () => {
     try {
       const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${tripData.origin_lat},${tripData.origin_lng}&destination=${tripData.dest_lat},${tripData.dest_lng}&key=${GOOGLE_MAPS_API_KEY}`;
@@ -226,13 +240,31 @@ export default function TripHandlingScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    loadBids();
+    Promise.all([loadBids(), loadBookings()]).finally(() => {
+      setRefreshing(false);
+    });
   }, []);
 
   const handleAcceptBid = async (bid: BidWithUser) => {
+    // Check available seats first
+    const bookedSeats = bookings.filter(booking => 
+      booking.status !== 'cancelled' && booking.trip_id === tripId
+    ).length;
+    
+    const availableSeats = tripData.available_seats - bookedSeats;
+    
+    if (availableSeats <= 0) {
+      Alert.alert(
+        'No Seats Available',
+        'All seats for this trip are already booked. You cannot accept more bids.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     Alert.alert(
       'Accept Bid',
-      `Accept bid from ${bid.user_name} for LKR ${bid.bid_price.toFixed(2)}?\n\nThis will create a booking and notify the passenger.`,
+      `Accept bid from ${bid.user_name} for LKR ${bid.bid_price.toFixed(2)}?\n\nThis will create a booking and notify the passenger.\n\nSeats remaining: ${availableSeats}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -242,16 +274,17 @@ export default function TripHandlingScreen() {
               setAcceptingBid(bid.id);
               
               // Create booking for this bid
-              const res=await apiService.createBooking({
+              const res = await apiService.createBooking({
                 user_id: bid.user_id,
                 trip_id: tripData.id,
                 bid_id: bid.id,
                 fare: bid.bid_price,
               });
-              console.log(res)
+              console.log(res);
               
               Alert.alert('Success', 'Bid accepted! Booking created successfully.');
               loadBids(); // Refresh to show updated status
+              loadBookings(); // Refresh bookings list
             } catch (error: any) {
               console.error('Error accepting bid:', error);
               Alert.alert('Error', 'Failed to accept bid: ' + (error?.message || 'Unknown error'));
@@ -305,6 +338,7 @@ export default function TripHandlingScreen() {
     switch (status) {
       case 'open': return '#2563eb';
       case 'accepted': return '#059669';
+      case 'booked': return '#10b981';
       case 'rejected': return '#dc2626';
       case 'withdrawn': return '#6b7280';
       default: return '#6b7280';
@@ -314,22 +348,32 @@ export default function TripHandlingScreen() {
   const renderBidItem = ({ item, index }: { item: BidWithUser; index: number }) => {
     const isTopBid = index === 0;
     const isAccepted = item.status === 'accepted';
+    const isBooked = item.status === 'booked';
     const isProcessing = acceptingBid === item.id;
+    
+    // Calculate available seats
+    const bookedSeats = bookings.filter(booking => 
+      booking.status !== 'cancelled' && booking.trip_id === tripId
+    ).length;
+    const availableSeats = tripData.available_seats - bookedSeats;
+    const canAccept = !isAccepted && !isBooked && item.status === 'open' && availableSeats > 0;
     
     return (
       <View style={[
         styles.bidItem,
         isTopBid && styles.topBidItem,
-        isAccepted && styles.acceptedBidItem,
+        (isAccepted || isBooked) && styles.acceptedBidItem,
       ]}>
         <View style={styles.bidHeader}>
           <View style={styles.bidRankContainer}>
             <View style={[styles.bidRankBadge, isTopBid && styles.topBidBadge]}>
               <Text style={[styles.bidRankText, isTopBid && styles.topBidText]}>#{index + 1}</Text>
             </View>
-            {isAccepted && (
+            {(isAccepted || isBooked) && (
               <View style={styles.acceptedBadge}>
-                <Text style={styles.acceptedText}>ACCEPTED</Text>
+                <Text style={styles.acceptedText}>
+                  {isBooked ? 'BOOKED' : 'ACCEPTED'}
+                </Text>
               </View>
             )}
           </View>
@@ -374,7 +418,7 @@ export default function TripHandlingScreen() {
             <Text style={styles.callButtonText}>📞 Call</Text>
           </TouchableOpacity>
           
-          {!isAccepted && item.status === 'open' && (
+          {canAccept && (
             <TouchableOpacity 
               style={[styles.actionButton, styles.acceptButton, isProcessing && styles.buttonDisabled]}
               onPress={() => handleAcceptBid(item)}
@@ -387,6 +431,44 @@ export default function TripHandlingScreen() {
               )}
             </TouchableOpacity>
           )}
+          
+          {!canAccept && item.status === 'open' && availableSeats <= 0 && (
+            <View style={[styles.actionButton, styles.buttonDisabled]}>
+              <Text style={styles.actionButtonText}>No Seats</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const renderBookingItem = ({ item, index }: { item: BackendBooking; index: number }) => {
+    return (
+      <View style={[styles.bidItem, styles.acceptedBidItem]}>
+        <View style={styles.bidHeader}>
+          <View style={styles.bidRankContainer}>
+            <View style={styles.acceptedBadge}>
+              <Text style={styles.acceptedText}>BOOKING #{item.id}</Text>
+            </View>
+          </View>
+          <Text style={styles.bidPrice}>
+            LKR {item.fare.toFixed(2)}
+          </Text>
+        </View>
+        
+        <View style={styles.passengerInfo}>
+          <Text style={styles.passengerName}>👤 Passenger ID: {item.passenger_user_id}</Text>
+          <Text style={styles.passengerContact}>💳 Payment: {item.payment_method}</Text>
+          <Text style={styles.passengerContact}>📊 Status: {item.status}</Text>
+        </View>
+        
+        <View style={styles.bidMeta}>
+          <Text style={styles.bidTime}>
+            🕒 {getRelativeTime(item.created_at)}
+          </Text>
+          <Text style={[styles.bidStatus, { color: getBidStatusColor(item.status) }]}>
+            {item.status.toUpperCase()}
+          </Text>
         </View>
       </View>
     );
@@ -432,17 +514,24 @@ export default function TripHandlingScreen() {
           </Text>
         </View>
 
-        {/* Bid stats */}
-        {bids.length > 0 && (
+        {/* Bid and booking stats */}
+        {(bids.length > 0 || bookings.length > 0) && (
           <View style={styles.bidStats}>
+            {bids.length > 0 && (
+              <>
+                <Text style={styles.bidStatsText}>
+                  💰 Highest: LKR {Math.max(...bids.map(b => b.bid_price)).toFixed(2)}
+                </Text>
+                <Text style={styles.bidStatsText}>
+                  📊 {bids.length} bid{bids.length !== 1 ? 's' : ''}
+                </Text>
+              </>
+            )}
             <Text style={styles.bidStatsText}>
-              💰 Highest: LKR {Math.max(...bids.map(b => b.bid_price)).toFixed(2)}
+              ✅ {bookings.filter(b => b.status !== 'cancelled').length} booked
             </Text>
             <Text style={styles.bidStatsText}>
-              📊 {bids.length} bid{bids.length !== 1 ? 's' : ''}
-            </Text>
-            <Text style={styles.bidStatsText}>
-              ✅ {bids.filter(b => b.status === 'accepted').length} accepted
+              🪑 {tripData.available_seats - bookings.filter(b => b.status !== 'cancelled').length} seats left
             </Text>
           </View>
         )}
@@ -498,38 +587,74 @@ export default function TripHandlingScreen() {
         )}
       </View>
 
-      {/* Bids list */}
+      {/* Tabbed Bids and Bookings Section */}
       <View style={styles.bidsSection}>
         <View style={styles.bidsHeader}>
-          <Text style={styles.bidsTitle}>
-            Passenger Bids ({bids.length})
-          </Text>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity 
+              style={[styles.tab, activeTab === 'bids' && styles.activeTab]}
+              onPress={() => setActiveTab('bids')}
+            >
+              <Text style={[styles.tabText, activeTab === 'bids' && styles.activeTabText]}>
+                Bids ({bids.filter(bid => bid.status !== 'booked').length})
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.tab, activeTab === 'bookings' && styles.activeTab]}
+              onPress={() => setActiveTab('bookings')}
+            >
+              <Text style={[styles.tabText, activeTab === 'bookings' && styles.activeTabText]}>
+                Bookings ({bookings.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.headerActions}>
             <View style={[styles.connectionStatus, isConnected && styles.connected]}>
               <Text style={[styles.connectionText, isConnected && styles.connectedText]}>
                 {isConnected ? '🟢 Live' : '🔴 Offline'}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => loadBids()} style={styles.refreshButton}>
+            <TouchableOpacity onPress={() => {
+              loadBids();
+              loadBookings();
+            }} style={styles.refreshButton}>
               <Text style={styles.refreshButtonText}>🔄 Refresh</Text>
             </TouchableOpacity>
           </View>
         </View>
         
-        {bids.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No bids yet for this trip.</Text>
-            <Text style={styles.emptySubText}>Passengers will see your trip in search results.</Text>
-          </View>
+        {activeTab === 'bids' ? (
+          bids.filter(bid => bid.status !== 'booked').length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No open bids for this trip.</Text>
+              <Text style={styles.emptySubText}>Passengers will see your trip in search results.</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={bids.filter(bid => bid.status !== 'booked')}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={renderBidItem}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+              contentContainerStyle={styles.bidsList}
+              showsVerticalScrollIndicator={false}
+            />
+          )
         ) : (
-          <FlatList
-            data={bids}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderBidItem}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            contentContainerStyle={styles.bidsList}
-            showsVerticalScrollIndicator={false}
-          />
+          bookings.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No bookings yet for this trip.</Text>
+              <Text style={styles.emptySubText}>Accept bids to create bookings.</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={bookings}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={renderBookingItem}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+              contentContainerStyle={styles.bidsList}
+              showsVerticalScrollIndicator={false}
+            />
+          )
         )}
       </View>
 
@@ -1015,5 +1140,36 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
+  },
+
+  // Tab styles
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    padding: 2,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  activeTab: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  activeTabText: {
+    color: '#111827',
   },
 });

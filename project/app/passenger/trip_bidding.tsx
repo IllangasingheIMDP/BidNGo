@@ -327,9 +327,26 @@ export default function TripBiddingScreen() {
           <Text style={styles.bidTime}>
             🕒 {getRelativeTime(item.created_at)}
           </Text>
-          <Text style={[styles.bidStatus, { color: getBidStatusColor(item.status) }]}>
-            {item.status.toUpperCase()}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[styles.bidStatus, { color: getBidStatusColor(item.status) }]}>
+              {item.status.toUpperCase()}
+            </Text>
+            {isMyBid && item.status === 'booked' && (
+              <TouchableOpacity
+                style={styles.showBookingButton}
+                onPress={() => router.push({
+                  pathname: '/passenger/booked',
+                  params: {
+                    bidId: item.id,
+                    tripId: item.trip_id,
+                    viewMode: 'single'
+                  }
+                })}
+              >
+                <Text style={styles.showBookingButtonText}>Show Booking</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     );
@@ -339,6 +356,7 @@ export default function TripBiddingScreen() {
     switch (status) {
       case 'open': return '#2563eb';
       case 'accepted': return '#059669';
+      case 'booked': return '#10b981';
       case 'rejected': return '#dc2626';
       case 'withdrawn': return '#6b7280';
       default: return '#6b7280';
@@ -916,5 +934,16 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { 
     opacity: 0.6 
+  },
+  showBookingButton: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  showBookingButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
