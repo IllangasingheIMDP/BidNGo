@@ -37,6 +37,17 @@ public function getUser(string email) returns DBUser|error {
     }
     return row.value;
 }
+public function getUserById(int id) returns DBUser|error {
+    stream<DBUser, error?> rs = db:dbClient->query(
+        `SELECT * FROM users WHERE id = ${id}`
+    );
+    record {DBUser value;}? row = check rs.next();
+    check rs.close();
+    if row is () {
+        return error("USER_NOT_FOUND");
+    }
+    return row.value;
+}
 
 public function updateEmail(string currentEmail, string newEmail) returns json|error {
     if strings:trim(newEmail) == "" {
