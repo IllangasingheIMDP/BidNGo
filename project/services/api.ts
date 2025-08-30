@@ -100,7 +100,7 @@ export interface AuthResponse {
   token: string;
 }
 
-const API_BASE_URL = 'http://10.30.240.137:9000';
+const API_BASE_URL = 'https://sjt6dkzd-9000.inc1.devtunnels.ms';
 
 class ApiService {
   private async getToken(): Promise<string | null> {

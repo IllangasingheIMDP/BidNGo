@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Alert, Platform, Modal } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { router } from 'expo-router';
 import LocationPicker from '../../components/LocationPicker';
 import { apiService, BackendTrip } from '../../services/api';
 
@@ -133,16 +134,21 @@ export default function TripBookingScreen() {
 				</TouchableOpacity>
 				<TouchableOpacity 
 					style={styles.bookButton}
-					onPress={() => Alert.alert(
-						'Book Trip', 
-						`Book this trip for LKR ${item.base_price.toFixed(2)}?\n\nFrom: ${item.origin_addr}\nTo: ${item.dest_addr}\nDeparture: ${new Date(item.departure_datetime).toLocaleString()}`,
-						[
-							{ text: 'Cancel', style: 'cancel' },
-							{ text: 'Book Now', onPress: () => Alert.alert('Success', 'Booking feature coming soon!') }
-						]
-					)}
+					onPress={() => {
+						// Navigate to bidding screen with trip and pickup location data
+						router.push({
+							pathname: '/passenger/trip_bidding' as any,
+							params: {
+								tripId: item.id.toString(),
+								tripData: JSON.stringify(item),
+								pickupLat: origin?.lat.toString() || '',
+								pickupLng: origin?.lng.toString() || '',
+								pickupAddress: origin?.address || '',
+							}
+						});
+					}}
 				>
-					<Text style={styles.bookButtonText}>Book Trip</Text>
+					<Text style={styles.bookButtonText}>Place Bid</Text>
 				</TouchableOpacity>
 			</View>
 		</View>
