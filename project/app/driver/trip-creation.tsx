@@ -641,7 +641,7 @@ export default function TripCreationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0f0f0f',
   },
   header: {
     flexDirection: 'row',
@@ -650,9 +650,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xxxl,
     paddingBottom: Spacing.lg,
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[200],
+    borderBottomColor: '#27272a',
   },
   backButton: {
     padding: Spacing.sm,
@@ -660,16 +660,16 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.sizes.xl,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
   },
   placeholder: {
     width: 40,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[200],
+    borderBottomColor: '#27272a',
   },
   tab: {
     flex: 1,
@@ -679,25 +679,25 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: Colors.primary[600],
+    borderBottomColor: '#3b82f6',
   },
   tabText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   activeTabText: {
-    color: Colors.primary[600],
+    color: '#3b82f6',
   },
   formContainer: {
     flex: 1,
   },
   formSection: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     margin: Spacing.lg,
     padding: Spacing.xl,
     borderRadius: 16,
-    shadowColor: Colors.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -706,7 +706,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: Spacing.lg,
   },
   inputGroup: {
@@ -715,39 +715,39 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[700],
+    color: '#a1a1aa',
     marginBottom: Spacing.sm,
   },
   locationInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#27272a',
     borderWidth: 1,
-    borderColor: Colors.neutral[200],
+    borderColor: '#3f3f46',
     borderRadius: 12,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
     gap: Spacing.sm,
   },
   placeholderInput: {
-    borderColor: Colors.neutral[300],
+    borderColor: '#3f3f46',
     borderStyle: 'dashed',
   },
   locationText: {
     flex: 1,
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[900],
+    color: '#ffffff',
   },
   placeholderText: {
-    color: Colors.neutral[500],
+    color: '#a1a1aa',
   },
   inputWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#27272a',
     borderWidth: 1,
-    borderColor: Colors.neutral[200],
+    borderColor: '#3f3f46',
     borderRadius: 12,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
@@ -757,7 +757,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[900],
+    color: '#ffffff',
   },
   notesInput: {
     alignItems: 'flex-start',
@@ -778,7 +778,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -789,11 +789,11 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Bold',
-    color: Colors.white,
+    color: '#ffffff',
   },
   secondaryButton: {
     flex: 1,
-    backgroundColor: Colors.neutral[100],
+    backgroundColor: '#27272a',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.md,
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[700],
+    color: '#a1a1aa',
   },
   disabledButton: {
     opacity: 0.6,
@@ -819,24 +819,24 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#a1a1aa',
   },
   emptyTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[700],
+    color: '#ffffff',
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
   emptySubtitle: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#a1a1aa',
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   emptyAction: {
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
@@ -847,17 +847,17 @@ const styles = StyleSheet.create({
   emptyActionText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.white,
+    color: '#ffffff',
   },
   tripsList: {
     padding: Spacing.lg,
     gap: Spacing.md,
   },
   tripCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderRadius: 16,
     padding: Spacing.lg,
-    shadowColor: Colors.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -876,7 +876,7 @@ const styles = StyleSheet.create({
   routeText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: Spacing.xs,
   },
   tripMeta: {
@@ -887,12 +887,12 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   tripPrice: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.primary[600],
+    color: '#3b82f6',
   },
   tripDetails: {
     flexDirection: 'row',
@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   tripActions: {
     flexDirection: 'row',
@@ -916,12 +916,12 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.neutral[100],
+    borderTopColor: '#27272a',
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.primary[50],
+    backgroundColor: '#1e40af20',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: 8,
@@ -930,12 +930,12 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.primary[600],
+    color: '#3b82f6',
   },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.error[50],
+    backgroundColor: '#dc262620',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: 8,
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.error[600],
+    color: '#dc2626',
   },
   modalOverlay: {
     flex: 1,
@@ -953,7 +953,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   datePickerContainer: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderRadius: 16,
     padding: Spacing.xl,
     margin: Spacing.xl,
@@ -962,7 +962,7 @@ const styles = StyleSheet.create({
   datePickerTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
@@ -973,21 +973,21 @@ const styles = StyleSheet.create({
   },
   datePickerButton: {
     flex: 1,
-    backgroundColor: Colors.neutral[100],
+    backgroundColor: '#27272a',
     paddingVertical: Spacing.sm,
     borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: Spacing.xs,
   },
   primaryDatePickerButton: {
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
   },
   datePickerButtonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[700],
+    color: '#a1a1aa',
   },
   primaryDatePickerButtonText: {
-    color: Colors.white,
+    color: '#ffffff',
   },
 });

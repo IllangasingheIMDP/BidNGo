@@ -18,7 +18,7 @@ export default function RoleSelectionScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.neutral[900]} />
+          <ArrowLeft size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -32,7 +32,7 @@ export default function RoleSelectionScreen() {
             onPress={() => handleRoleSelection('passenger')}
           >
             <View style={styles.roleIcon}>
-              <User size={32} color={Colors.primary[600]} />
+              <User size={32} color="#3b82f6" />
             </View>
             <Text style={styles.roleTitle}>Passenger</Text>
             <Text style={styles.roleDescription}>
@@ -51,7 +51,7 @@ export default function RoleSelectionScreen() {
             onPress={() => handleRoleSelection('driver')}
           >
             <View style={styles.roleIcon}>
-              <Car size={32} color={Colors.secondary[600]} />
+              <Car size={32} color="#10b981" />
             </View>
             <Text style={styles.roleTitle}>Driver</Text>
             <Text style={styles.roleDescription}>
@@ -77,7 +77,7 @@ export default function RoleSelectionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0f0f0f',
   },
   header: {
     paddingHorizontal: Spacing.xl,
@@ -95,14 +95,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.sizes['3xl'],
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: Spacing.xs,
   },
   subtitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
     textAlign: 'center',
     marginBottom: Spacing.xxxl,
   },
@@ -111,22 +111,22 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   roleCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderRadius: 16,
     padding: Spacing.xl,
-    shadowColor: Colors.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
     borderWidth: 2,
-    borderColor: Colors.neutral[100],
+    borderColor: '#27272a',
   },
   roleIcon: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.primary[50],
+    backgroundColor: '#27272a',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
@@ -135,14 +135,14 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontSize: Typography.sizes.xl,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
   roleDescription: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
     textAlign: 'center',
     marginBottom: Spacing.lg,
     lineHeight: 24,
@@ -153,12 +153,12 @@ const styles = StyleSheet.create({
   feature: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[700],
+    color: '#a1a1aa',
   },
   note: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#71717a',
     textAlign: 'center',
     fontStyle: 'italic',
   },

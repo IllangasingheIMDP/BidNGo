@@ -184,7 +184,7 @@ export default function DriverRegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0f0f0f',
   },
   scrollView: {
     flex: 1,
@@ -197,14 +197,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.sizes['3xl'],
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
   subtitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
     textAlign: 'center',
     marginBottom: Spacing.xxxl,
   },
@@ -226,21 +226,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[700],
+    color: '#a1a1aa',
   },
   input: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     borderWidth: 1,
-    borderColor: Colors.neutral[200],
+    borderColor: '#27272a',
   },
   button: {
-    backgroundColor: Colors.secondary[600],
+    backgroundColor: '#10b981',
     borderRadius: 12,
     paddingVertical: Spacing.md,
     alignItems: 'center',
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Bold',
-    color: Colors.white,
+    color: '#ffffff',
   },
   footer: {
     flexDirection: 'row',
@@ -263,11 +263,11 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   footerLink: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Bold',
-    color: Colors.primary[600],
+    color: '#3b82f6',
   },
 });

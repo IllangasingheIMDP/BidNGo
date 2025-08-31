@@ -383,7 +383,7 @@ export default function DriverRegistrationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0f0f0f',
   },
   header: {
     flexDirection: 'row',
@@ -392,9 +392,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xxxl,
     paddingBottom: Spacing.lg,
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[200],
+    borderBottomColor: '#27272a',
   },
   backIcon: {
     padding: Spacing.xs,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.sizes.xl,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
   },
   placeholder: {
     width: 32,
@@ -416,19 +416,19 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: Colors.neutral[200],
+    backgroundColor: '#27272a',
     borderRadius: 2,
     marginBottom: Spacing.xs,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     borderRadius: 2,
   },
   progressText: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
     textAlign: 'center',
   },
   stepContainer: {
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.md,
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   stepNumber: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.white,
+    color: '#ffffff',
   },
   stepInfo: {
     flex: 1,
@@ -460,13 +460,13 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: Typography.sizes.xl,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: 4,
   },
   stepSubtitle: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   form: {
     gap: Spacing.lg,
@@ -478,28 +478,28 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[700],
+    color: '#a1a1aa',
   },
   inputWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.neutral[200],
+    borderColor: '#27272a',
     gap: Spacing.sm,
   },
   textInput: {
     flex: 1,
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     paddingVertical: Spacing.xs,
   },
   continueButton: {
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     borderRadius: 12,
     paddingVertical: Spacing.md,
     alignItems: 'center',
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Bold',
-    color: Colors.white,
+    color: '#ffffff',
   },
   documentsContainer: {
     gap: Spacing.xl,
@@ -519,19 +519,19 @@ const styles = StyleSheet.create({
   documentTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
   },
   documentSubtitle: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
     marginBottom: Spacing.sm,
   },
   uploadButton: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: Colors.primary[200],
+    borderColor: '#3b82f6',
     borderStyle: 'dashed',
     paddingVertical: Spacing.xl,
     alignItems: 'center',
@@ -543,10 +543,10 @@ const styles = StyleSheet.create({
   uploadText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.primary[600],
+    color: '#3b82f6',
   },
   uploadedText: {
-    color: Colors.success[600],
+    color: '#10b981',
   },
   actionButtons: {
     flexDirection: 'row',
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     flex: 1,
-    backgroundColor: Colors.neutral[100],
+    backgroundColor: '#27272a',
     borderRadius: 12,
     paddingVertical: Spacing.md,
     alignItems: 'center',
@@ -562,11 +562,11 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[700],
+    color: '#a1a1aa',
   },
   submitButton: {
     flex: 2,
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     borderRadius: 12,
     paddingVertical: Spacing.md,
     alignItems: 'center',
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Bold',
-    color: Colors.white,
+    color: '#ffffff',
   },
   buttonDisabled: {
     opacity: 0.6,

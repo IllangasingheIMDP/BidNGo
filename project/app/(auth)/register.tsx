@@ -243,7 +243,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0f0f0f',
   },
   scrollView: {
     flex: 1,
@@ -256,14 +256,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.sizes['3xl'],
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
   subtitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
     textAlign: 'center',
     marginBottom: Spacing.xxxl,
   },
@@ -283,34 +283,35 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[700],
+    color: '#a1a1aa',
     marginBottom: Spacing.sm,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: Colors.neutral[300],
+    borderColor: '#27272a',
     borderRadius: 8,
     paddingHorizontal: Spacing.md,
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
+    color: '#ffffff',
   },
   button: {
     height: 48,
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: Spacing.lg,
   },
   buttonDisabled: {
-    backgroundColor: Colors.neutral[400],
+    backgroundColor: '#374151',
   },
   buttonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.white,
+    color: '#ffffff',
   },
   footer: {
     flexDirection: 'row',
@@ -320,12 +321,12 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   footerLink: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.primary[600],
+    color: '#3b82f6',
   },
   roleContainer: {
     flexDirection: 'row',
@@ -335,28 +336,28 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderWidth: 2,
-    borderColor: Colors.neutral[300],
+    borderColor: '#27272a',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
   },
   roleButtonActive: {
-    borderColor: Colors.primary[600],
-    backgroundColor: Colors.primary[50],
+    borderColor: '#3b82f6',
+    backgroundColor: '#1e40af20',
   },
   roleButtonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   roleButtonTextActive: {
-    color: Colors.primary[600],
+    color: '#3b82f6',
   },
   roleNote: {
     fontSize: Typography.sizes.xs,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#71717a',
     marginTop: Spacing.xs,
     fontStyle: 'italic',
   },

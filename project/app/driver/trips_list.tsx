@@ -140,7 +140,7 @@ export default function DriverTripsScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#3b82f6" />
         <Text style={styles.loadingText}>Loading your trips...</Text>
       </View>
     );
@@ -177,7 +177,7 @@ export default function DriverTripsScreen() {
           data={trips}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderTripItem}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ffffff" />}
           contentContainerStyle={styles.tripsList}
           showsVerticalScrollIndicator={false}
         />
@@ -189,19 +189,19 @@ export default function DriverTripsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#0f0f0f',
   },
 
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#0f0f0f',
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6b7280',
+    color: '#a1a1aa',
   },
 
   header: {
@@ -210,29 +210,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#27272a',
   },
   backButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#27272a',
     borderRadius: 8,
   },
   backButtonText: {
-    color: '#374151',
+    color: '#ffffff',
     fontWeight: '600',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: '#ffffff',
   },
   addButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#3b82f6',
     borderRadius: 8,
   },
   addButtonText: {
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   },
 
   tripCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
@@ -279,12 +279,12 @@ const styles = StyleSheet.create({
   tripPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2563eb',
+    color: '#3b82f6',
   },
 
   routeText: {
     fontSize: 14,
-    color: '#111827',
+    color: '#ffffff',
     marginBottom: 4,
   },
 
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#a1a1aa',
   },
 
   tripFooter: {
@@ -308,22 +308,22 @@ const styles = StyleSheet.create({
   timeUntilText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#374151',
+    color: '#ffffff',
   },
   tapHint: {
     fontSize: 12,
-    color: '#2563eb',
+    color: '#3b82f6',
     fontStyle: 'italic',
   },
 
   notesText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#a1a1aa',
     fontStyle: 'italic',
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: '#27272a',
   },
 
   emptyState: {
@@ -335,17 +335,17 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#ffffff',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#a1a1aa',
     textAlign: 'center',
     marginBottom: 24,
   },
   createTripButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#3b82f6',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
