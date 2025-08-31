@@ -684,7 +684,7 @@ class ApiService {
 
   // ========== Admin Driver Management ==========
 
-  // Get driver profile by user ID (admin only)
+  // Get driver profile by user ID 
   async getDriverProfileByUserId(userId: number): Promise<DriverProfile> {
     return this.request<DriverProfile>(`/api/drivers/profile/user/${userId}`);
   }

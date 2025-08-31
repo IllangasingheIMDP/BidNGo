@@ -92,10 +92,7 @@ public http:Service DriverService = @http:ServiceConfig {} service object {
         }
 
         string role = check auth.role.ensureType(string);
-        if role != "admin" {
-            check caller->respond({"error": "UNAUTHORIZED"});
-            return;
-        }
+        
 
         DBDriverProfile|error profile = getDriverProfile(userId);
         if profile is error {
