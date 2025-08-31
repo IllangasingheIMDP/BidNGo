@@ -62,7 +62,7 @@ export default function DriverScreen() {
     <ScrollView 
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#ffffff" />
       }
     >
       <View style={styles.header}>
@@ -71,31 +71,31 @@ export default function DriverScreen() {
           style={styles.createButton}
           onPress={() => router.push('/driver/trip-creation')}
         >
-          <Plus size={20} color={Colors.white} />
+          <Plus size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.statsContainer}>
         <StatCard
-          icon={<Car size={24} color={Colors.primary[600]} />}
+          icon={<Car size={24} color="#3b82f6" />}
           title="Active Trips"
           value={stats.openTrips}
           subtitle="Currently posted"
         />
         <StatCard
-          icon={<Calendar size={24} color={Colors.success[600]} />}
+          icon={<Calendar size={24} color="#3b82f6" />}
           title="Completed"
           value={stats.completedTrips}
           subtitle="This month"
         />
         <StatCard
-          icon={<DollarSign size={24} color={Colors.accent[600]} />}
+          icon={<DollarSign size={24} color="#3b82f6" />}
           title="Total Bids"
           value={stats.totalBids}
           subtitle="Across all trips"
         />
         <StatCard
-          icon={<Users size={24} color={Colors.secondary[600]} />}
+          icon={<Users size={24} color="#3b82f6" />}
           title="Earnings"
           value={`LKR`}
           subtitle="This month"
@@ -116,7 +116,7 @@ export default function DriverScreen() {
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Car size={48} color={Colors.neutral[400]} />
+            <Car size={48} color="#a1a1aa" />
             <Text style={styles.emptyTitle}>No trips posted</Text>
             <Text style={styles.emptySubtitle}>
               Create your first trip to start earning
@@ -137,7 +137,7 @@ export default function DriverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0f0f0f',
   },
   header: {
     flexDirection: 'row',
@@ -150,10 +150,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.sizes['2xl'],
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
   },
   createButton: {
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     borderRadius: 12,
     padding: Spacing.sm,
   },
@@ -177,12 +177,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
   },
   createNew: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.primary[600],
+    color: '#3b82f6',
   },
   loadingState: {
     alignItems: 'center',
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#a1a1aa',
   },
   emptyState: {
     alignItems: 'center',
@@ -200,19 +200,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[700],
+    color: '#ffffff',
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
   emptySubtitle: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#a1a1aa',
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   emptyButton: {
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     borderRadius: 12,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
@@ -220,6 +220,6 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.white,
+    color: '#ffffff',
   },
 });
