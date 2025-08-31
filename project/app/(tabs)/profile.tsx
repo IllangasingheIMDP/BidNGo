@@ -93,54 +93,54 @@ export default function ProfileScreen() {
   const getVerificationStatusColor = (status?: string) => {
     switch (status) {
       case 'approved':
-        return Colors.success[600];
+        return '#3b82f6';
       case 'rejected':
-        return Colors.error[600];
+        return '#ef4444';
       case 'pending':
       default:
-        return Colors.warning[600];
+        return '#f59e0b';
     }
   };
 
   const getVerificationStatusIcon = (status?: string) => {
     switch (status) {
       case 'approved':
-        return <CheckCircle size={16} color={Colors.success[600]} />;
+        return <CheckCircle size={16} color="#3b82f6" />;
       case 'rejected':
-        return <XCircle size={16} color={Colors.error[600]} />;
+        return <XCircle size={16} color="#ef4444" />;
       case 'pending':
       default:
-        return <Clock size={16} color={Colors.warning[600]} />;
+        return <Clock size={16} color="#f59e0b" />;
     }
   };
 
   const passengerMenuItems = [
     {
-      icon: <Settings size={20} color={Colors.neutral[600]} />,
+      icon: <Settings size={20} color="#a1a1aa" />,
       title: 'Account Settings',
       subtitle: 'Update your profile information',
       onPress: () => {}, // TODO: Implement settings screen
     },
     {
-      icon: <MapPin size={20} color={Colors.primary[600]} />,
+      icon: <MapPin size={20} color="#3b82f6" />,
       title: 'Saved Places',
       subtitle: 'Manage your favorite locations',
       onPress: () => {}, // TODO: Implement saved places
     },
     {
-      icon: <FileText size={20} color={Colors.secondary[600]} />,
+      icon: <FileText size={20} color="#3b82f6" />,
       title: 'Trip History',
       subtitle: 'View your completed trips and bookings',
       onPress: () => {}, // TODO: Implement trip history
     },
     {
-      icon: <CreditCard size={20} color={Colors.accent[600]} />,
+      icon: <CreditCard size={20} color="#3b82f6" />,
       title: 'Payment Methods',
       subtitle: 'Manage your payment options',
       onPress: () => {}, // TODO: Implement payment methods
     },
     {
-      icon: <LogOut size={20} color={Colors.error[600]} />,
+      icon: <LogOut size={20} color="#ef4444" />,
       title: 'Sign Out',
       subtitle: 'Sign out of your account',
       onPress: handleLogout,
@@ -150,31 +150,31 @@ export default function ProfileScreen() {
 
   const driverMenuItems = [
     {
-      icon: <Settings size={20} color={Colors.neutral[600]} />,
+      icon: <Settings size={20} color="#a1a1aa" />,
       title: 'Account Settings',
       subtitle: 'Update your profile information',
       onPress: () => {}, // TODO: Implement settings screen
     },
     {
-      icon: <Car size={20} color={Colors.primary[600]} />,
+      icon: <Car size={20} color="#3b82f6" />,
       title: 'Vehicle & Documents',
       subtitle: 'Manage your vehicle and documents',
       onPress: () => {}, // TODO: Implement vehicle management
     },
     {
-      icon: <DollarSign size={20} color={Colors.success[600]} />,
+      icon: <DollarSign size={20} color="#3b82f6" />,
       title: 'Earnings',
       subtitle: 'View your earnings and payment history',
       onPress: () => {}, // TODO: Implement earnings screen
     },
     {
-      icon: <FileText size={20} color={Colors.secondary[600]} />,
+      icon: <FileText size={20} color="#3b82f6" />,
       title: 'Trip History',
       subtitle: 'View your completed trips and ratings',
       onPress: () => {}, // TODO: Implement trip history
     },
     {
-      icon: <LogOut size={20} color={Colors.error[600]} />,
+      icon: <LogOut size={20} color="#ef4444" />,
       title: 'Sign Out',
       subtitle: 'Sign out of your account',
       onPress: handleLogout,
@@ -197,7 +197,7 @@ export default function ProfileScreen() {
     <ScrollView 
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ffffff" />
       }
     >
       <View style={styles.header}>
@@ -289,10 +289,10 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0f0f0f',
   },
   header: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xxxl,
     paddingBottom: Spacing.xl,
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.primary[100],
+    backgroundColor: '#3b82f6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.md,
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: Typography.sizes['2xl'],
     fontFamily: 'Inter-Bold',
-    color: Colors.primary[600],
+    color: '#ffffff',
   },
   userInfo: {
     flex: 1,
@@ -322,13 +322,13 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: Typography.sizes.xl,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: 4,
   },
   userEmail: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
     marginBottom: Spacing.xs,
   },
   roleContainer: {
@@ -339,15 +339,15 @@ const styles = StyleSheet.create({
   roleText: {
     fontSize: Typography.sizes.xs,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[700],
-    backgroundColor: Colors.neutral[100],
+    color: '#ffffff',
+    backgroundColor: '#27272a',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: 4,
   },
   driverRole: {
-    backgroundColor: Colors.primary[100],
-    color: Colors.primary[700],
+    backgroundColor: '#3b82f6',
+    color: '#ffffff',
   },
   verificationBadge: {
     flexDirection: 'row',
@@ -362,24 +362,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
   },
   completeProfileButton: {
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: 8,
     alignItems: 'center',
   },
   completeProfileText: {
-    color: Colors.white,
+    color: '#ffffff',
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
   },
   vehicleCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     marginHorizontal: Spacing.xl,
     marginTop: Spacing.lg,
     padding: Spacing.md,
     borderRadius: 12,
-    shadowColor: Colors.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   vehicleTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: Spacing.sm,
   },
   vehicleInfo: {
@@ -397,22 +397,22 @@ const styles = StyleSheet.create({
   vehicleModel: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[900],
+    color: '#ffffff',
   },
   vehicleReg: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   licenseNumber: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.success[100],
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: 4,
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     fontSize: Typography.sizes.xs,
     fontFamily: 'Inter-Bold',
-    color: Colors.success[700],
+    color: '#3b82f6',
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -437,12 +437,12 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
   },
   ratingLabel: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   menu: {
     paddingHorizontal: Spacing.xl,
@@ -451,24 +451,24 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: Spacing.md,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
-    shadowColor: Colors.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
   destructiveItem: {
-    backgroundColor: Colors.error[50],
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
   menuItemIcon: {
     width: 40,
@@ -483,15 +483,15 @@ const styles = StyleSheet.create({
   menuItemTitle: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: 2,
   },
   destructiveText: {
-    color: Colors.error[700],
+    color: '#ef4444',
   },
   menuItemSubtitle: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#a1a1aa',
   },
 });

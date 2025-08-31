@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
-import { Search, MapPin, Clock, TrendingUp, Car, Plus, DollarSign, Users, Star, Calendar } from 'lucide-react-native';
+import { Search, MapPin, Clock, Car, Plus, DollarSign, Users, Star, Calendar, Sun, Moon, ArrowRight } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { Spacing, Typography } from '@/constants/Spacing';
 import { useAuth } from '@/contexts/AuthContext';
@@ -74,20 +74,22 @@ export default function HomeScreen() {
       <ScrollView 
         style={styles.container}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#ffffff" />
         }
+        contentContainerStyle={{ paddingBottom: 32 }}
       >
         <View style={styles.header}>
           <Text style={styles.greeting}>
-            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.name}!
+            {new Date().getHours() < 12 ? <Sun size={20} color="#3b82f6" /> : <Moon size={20} color="#3b82f6" />} 
+            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, <Text style={{ color: '#3b82f6' }}>{user?.name}</Text>!
           </Text>
           <Text style={styles.subtitle}>Ready to earn today?</Text>
         </View>
 
         {/* Driver Quick Actions */}
         <View style={styles.driverActions}>
-          <TouchableOpacity style={styles.primaryAction} onPress={navigateToCreateTrip}>
-            <Plus size={24} color={Colors.white} />
+          <TouchableOpacity style={styles.primaryAction} onPress={navigateToCreateTrip} activeOpacity={0.8}>
+            <Plus size={24} color="#ffffff" />
             <Text style={styles.primaryActionText}>Create New Trip</Text>
           </TouchableOpacity>
         </View>
@@ -96,17 +98,14 @@ export default function HomeScreen() {
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
-              <Car size={20} color={Colors.primary[600]} />
+              <Car size={22} color="#3b82f6" />
             </View>
             <Text style={styles.statValue}>{(myTrips || []).length}</Text>
             <Text style={styles.statLabel}>Active Trips</Text>
           </View>
-          
-          
-          
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
-              <Star size={20} color={Colors.accent[600]} />
+              <Star size={22} color="#3b82f6" />
             </View>
             <Text style={styles.statValue}>{(user?.rating || 0).toFixed(1)}</Text>
             <Text style={styles.statLabel}>Rating</Text>
@@ -129,8 +128,11 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your Recent Trips</Text>
+
             <TouchableOpacity onPress={() => router.push('/driver/trips_list')}>
+
               <Text style={styles.seeAll}>Manage all</Text>
+              <ArrowRight size={16} color="#3b82f6" />
             </TouchableOpacity>
           </View>
 
@@ -140,10 +142,10 @@ export default function HomeScreen() {
             </View>
           ) : (myTrips || []).length === 0 ? (
             <View style={styles.emptyState}>
-              <Car size={48} color={Colors.neutral[400]} />
+              <Car size={48} color="#a1a1aa" />
               <Text style={styles.emptyTitle}>No trips yet</Text>
               <Text style={styles.emptySubtitle}>Create your first trip to start earning</Text>
-              <TouchableOpacity style={styles.emptyAction} onPress={navigateToCreateTrip}>
+              <TouchableOpacity style={styles.emptyAction} onPress={navigateToCreateTrip} activeOpacity={0.8}>
                 <Text style={styles.emptyActionText}>Create Trip</Text>
               </TouchableOpacity>
             </View>
@@ -163,7 +165,7 @@ export default function HomeScreen() {
                 >
                   <View style={styles.tripHeader}>
                     <Text style={styles.tripRoute}>
-                      {trip.origin_addr} → {trip.dest_addr}
+                      {trip.origin_addr} <ArrowRight size={16} color="#3b82f6" /> {trip.dest_addr}
                     </Text>
                     <Text style={styles.tripPrice}>${trip.base_price}</Text>
                   </View>
@@ -187,23 +189,26 @@ export default function HomeScreen() {
     <ScrollView 
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#ffffff" />
       }
+      contentContainerStyle={{ paddingBottom: 32 }}
     >
       <View style={styles.header}>
         <Text style={styles.greeting}>
-          Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.name}!
+          {new Date().getHours() < 12 ? <Sun size={20} color="#3b82f6" /> : <Moon size={20} color="#3b82f6" />} 
+          Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, <Text style={{ color: '#3b82f6' }}>{user?.name}</Text>!
         </Text>
         <Text style={styles.subtitle}>Where would you like to go today?</Text>
       </View>
 
-      <TouchableOpacity style={styles.searchButton} onPress={navigateToSearch}>
-        <Search size={20} color={Colors.neutral[500]} />
+      <TouchableOpacity style={styles.searchButton} onPress={navigateToSearch} activeOpacity={0.8}>
+        <Search size={22} color="#3b82f6" />
         <Text style={styles.searchPlaceholder}>Search for trips...</Text>
       </TouchableOpacity>
 
       <View style={styles.quickActions}>
         <QuickSearchCard
+
           icon={<MapPin size={24} color={Colors.primary[600]} />}
           title="Book a Trip"
           subtitle="Search and Bid"
@@ -214,6 +219,7 @@ export default function HomeScreen() {
           title="My Bookings"
           subtitle="View & manage"
           onPress={() => router.push('/passenger/booked')}
+
         />
       </View>
 
@@ -222,8 +228,11 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Upcoming Trips</Text>
+
             <TouchableOpacity onPress={() => router.push('/passenger/booked')}>
+
               <Text style={styles.seeAll}>See all</Text>
+              <ArrowRight size={16} color="#3b82f6" />
             </TouchableOpacity>
           </View>
 
@@ -231,7 +240,7 @@ export default function HomeScreen() {
             {(myBookings || []).slice(0, 2).map((booking) => (
               <View key={booking.id} style={styles.bookingCard}>
                 <View style={styles.bookingHeader}>
-                  <Calendar size={16} color={Colors.primary[600]} />
+                  <Calendar size={16} color="#3b82f6" />
                   <Text style={styles.bookingStatus}>{booking.status}</Text>
                 </View>
                 <Text style={styles.bookingFare}>${booking.fare}</Text>
@@ -256,10 +265,10 @@ export default function HomeScreen() {
           </View>
         ) : recentTrips.length === 0 ? (
           <View style={styles.emptyState}>
-            <Search size={48} color={Colors.neutral[400]} />
+            <Search size={48} color="#a1a1aa" />
             <Text style={styles.emptyTitle}>No trips available</Text>
             <Text style={styles.emptySubtitle}>Try searching for trips in your area</Text>
-            <TouchableOpacity style={styles.emptyAction} onPress={navigateToSearch}>
+            <TouchableOpacity style={styles.emptyAction} onPress={navigateToSearch} activeOpacity={0.8}>
               <Text style={styles.emptyActionText}>Search Trips</Text>
             </TouchableOpacity>
           </View>
@@ -270,10 +279,11 @@ export default function HomeScreen() {
                 key={trip.id} 
                 style={styles.tripCard}
                 onPress={() => router.push('/(tabs)/bookings')} // TODO: Navigate to trip details
+                activeOpacity={0.8}
               >
                 <View style={styles.tripHeader}>
                   <Text style={styles.tripRoute}>
-                    {trip.origin_addr} → {trip.dest_addr}
+                    {trip.origin_addr} <ArrowRight size={16} color="#3b82f6" /> {trip.dest_addr}
                   </Text>
                   <Text style={styles.tripPrice}>${trip.base_price}</Text>
                 </View>
@@ -294,7 +304,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0f0f0f',
   },
   header: {
     paddingHorizontal: Spacing.xl,
@@ -304,30 +314,38 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: Typography.sizes['2xl'],
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   subtitle: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
   searchButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     marginHorizontal: Spacing.xl,
     marginBottom: Spacing.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.neutral[200],
+    borderColor: '#27272a',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchPlaceholder: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#a1a1aa',
     marginLeft: Spacing.sm,
   },
   quickActions: {
@@ -349,12 +367,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
+  },
+  seeAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
   },
   seeAll: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.primary[600],
+    color: '#3b82f6',
+    marginRight: 2,
   },
   loadingState: {
     alignItems: 'center',
@@ -363,7 +391,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#a1a1aa',
   },
   emptyState: {
     alignItems: 'center',
@@ -372,14 +400,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[700],
+    color: '#ffffff',
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
   emptySubtitle: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[500],
+    color: '#a1a1aa',
     textAlign: 'center',
   },
   // Driver-specific styles
@@ -388,18 +416,24 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   primaryAction: {
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.md,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: Spacing.sm,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryActionText: {
-    color: Colors.white,
+    color: '#ffffff',
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
+    marginLeft: 4,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -409,23 +443,23 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   statCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     flex: 1,
     minWidth: '48%',
     padding: Spacing.md,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   statIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.neutral[100],
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#27272a',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
@@ -433,27 +467,28 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: Typography.sizes.xl,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: 2,
   },
   statLabel: {
     fontSize: Typography.sizes.xs,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
     textAlign: 'center',
   },
   tripsList: {
     gap: Spacing.sm,
   },
   tripCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     padding: Spacing.md,
-    borderRadius: 12,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 4,
   },
   tripHeader: {
     flexDirection: 'row',
@@ -464,24 +499,27 @@ const styles = StyleSheet.create({
   tripRoute: {
     fontSize: Typography.sizes.base,
     fontFamily: 'Inter-Medium',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   tripPrice: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.primary[600],
+    color: '#3b82f6',
   },
   tripTime: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
     marginBottom: 2,
   },
   tripSeats: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.secondary[600],
+    color: '#a1a1aa',
   },
   tapHint: {
     fontSize: Typography.sizes.xs,
@@ -491,14 +529,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   emptyAction: {
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    borderRadius: 8,
+    borderRadius: 10,
     marginTop: Spacing.md,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   emptyActionText: {
-    color: Colors.white,
+    color: '#ffffff',
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
   },
@@ -507,14 +550,15 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   bookingCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#1a1a1a',
     padding: Spacing.md,
-    borderRadius: 12,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 4,
   },
   bookingHeader: {
     flexDirection: 'row',
@@ -525,18 +569,18 @@ const styles = StyleSheet.create({
   bookingStatus: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Medium',
-    color: Colors.primary[600],
+    color: '#3b82f6',
     textTransform: 'capitalize',
   },
   bookingFare: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: '#ffffff',
     marginBottom: 2,
   },
   bookingMethod: {
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: '#a1a1aa',
   },
 });

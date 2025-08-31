@@ -105,6 +105,7 @@ const API_BASE_URL = 'http://192.168.255.138:9000';
 // WebSocket configuration - use local IP when using dev tunnels
 const WS_HOST = '192.168.255.138'; // Your local IP address
 
+
 class ApiService {
   private async getToken(): Promise<string | null> {
     try {
