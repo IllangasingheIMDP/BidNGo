@@ -233,15 +233,15 @@ export default function BookedScreen() {
 
         <View style={styles.tripDetails}>
           <View style={styles.detailRow}>
-            <Calendar size={16} color={Colors.neutral[600]} />
+            <Calendar size={16} color="#60a5fa" />
             <Text style={styles.detailText}>{date}</Text>
           </View>
           <View style={styles.detailRow}>
-            <Clock size={16} color={Colors.neutral[600]} />
+            <Clock size={16} color="#60a5fa" />
             <Text style={styles.detailText}>{time}</Text>
           </View>
           <View style={styles.detailRow}>
-            <MapPin size={16} color={Colors.neutral[600]} />
+            <MapPin size={16} color="#60a5fa" />
             <Text style={styles.detailText}>
               Pickup: {bid?.pickup_addr || 'Default pickup'}
             </Text>
@@ -256,7 +256,7 @@ export default function BookedScreen() {
           <View style={styles.fareRow}>
             <Text style={styles.fareLabel}>Payment:</Text>
             <View style={styles.paymentMethod}>
-              <CreditCard size={14} color={Colors.neutral[600]} />
+              <CreditCard size={14} color="#9ca3af" />
               <Text style={styles.paymentMethodText}>
                 {booking.payment_method.charAt(0).toUpperCase() + booking.payment_method.slice(1)}
               </Text>
@@ -300,10 +300,10 @@ export default function BookedScreen() {
     );
   };
 
-  if (loading) {
+    if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary[600]} />
+        <ActivityIndicator size="large" color="#3b82f6" />
         <Text style={styles.loadingText}>Loading bookings...</Text>
       </View>
     );
@@ -314,11 +314,16 @@ export default function BookedScreen() {
     return (
       <ScrollView 
         style={styles.container}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl 
+          refreshing={refreshing} 
+          onRefresh={onRefresh}
+          tintColor="#3b82f6"
+          colors={['#3b82f6']}
+        />}
       >
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={20} color={Colors.neutral[700]} />
+            <ArrowLeft size={20} color="#ffffff" />
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Booking Details</Text>
@@ -341,7 +346,7 @@ export default function BookedScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={20} color={Colors.neutral[700]} />
+          <ArrowLeft size={20} color="#ffffff" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>My Bookings</Text>
@@ -370,12 +375,17 @@ export default function BookedScreen() {
 
       <ScrollView 
         style={styles.bookingsList}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl 
+          refreshing={refreshing} 
+          onRefresh={onRefresh}
+          tintColor="#3b82f6"
+          colors={['#3b82f6']}
+        />}
         showsVerticalScrollIndicator={false}
       >
         {filteredBookings.length === 0 ? (
           <View style={styles.emptyState}>
-            <Calendar size={48} color={Colors.neutral[400]} />
+            <Calendar size={48} color="#3b82f6" />
             <Text style={styles.emptyTitle}>No bookings found</Text>
             <Text style={styles.emptySubtitle}>
               {currentFilter === 'upcoming' 
@@ -400,242 +410,336 @@ export default function BookedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0a0a0a',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.neutral[50],
+    backgroundColor: '#0a0a0a',
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: 16,
     fontSize: 16,
-    color: Colors.neutral[600],
+    color: '#9ca3af',
+    letterSpacing: 0.5,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[200],
-    paddingTop: Platform.OS === 'ios' ? 50 : 12,
+    borderBottomColor: '#2a2a2a',
+    paddingTop: 45,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: '#2a2a2a',
   },
   backButtonText: {
     fontSize: 16,
-    color: Colors.neutral[700],
+    color: '#ffffff',
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.neutral[900],
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
   placeholder: {
-    width: 60,
+    width: 80,
   },
   filterContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral[200],
-    gap: 8,
+    borderBottomColor: '#2a2a2a',
+    gap: 12,
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.neutral[100],
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    backgroundColor: '#2a2a2a',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   activeFilterButton: {
-    backgroundColor: Colors.primary[600],
+    backgroundColor: '#3b82f6',
+    borderColor: '#60a5fa',
+    shadowColor: '#3b82f6',
+    shadowOpacity: 0.4,
   },
   filterButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.neutral[600],
+    color: '#9ca3af',
+    letterSpacing: 0.3,
   },
   activeFilterButtonText: {
-    color: '#fff',
+    color: '#ffffff',
   },
   bookingsList: {
     flex: 1,
-    padding: 16,
+    padding: 20,
   },
   bookingCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 12,
   },
   bookingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   statusContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   statusText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   paymentBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   paymentText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   bookingId: {
     fontSize: 14,
-    color: Colors.neutral[500],
+    color: '#6b7280',
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   routeContainer: {
-    marginBottom: 12,
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3b82f6',
   },
   routeText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.neutral[900],
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 0.3,
+    lineHeight: 24,
   },
   tripDetails: {
-    gap: 8,
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 16,
+    backgroundColor: '#262626',
+    padding: 16,
+    borderRadius: 16,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
+    paddingVertical: 4,
   },
   detailText: {
     fontSize: 14,
-    color: Colors.neutral[600],
+    color: '#d1d5db',
     flex: 1,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   fareContainer: {
     borderTopWidth: 1,
-    borderTopColor: Colors.neutral[200],
-    paddingTop: 12,
-    marginBottom: 12,
-    gap: 4,
+    borderTopColor: '#3a3a3a',
+    paddingTop: 16,
+    marginBottom: 16,
+    gap: 8,
+    backgroundColor: '#262626',
+    padding: 16,
+    borderRadius: 16,
   },
   fareRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 4,
   },
   fareLabel: {
     fontSize: 14,
-    color: Colors.neutral[600],
+    color: '#9ca3af',
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   fareAmount: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.neutral[900],
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#3b82f6',
+    letterSpacing: 0.3,
   },
   paymentMethod: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    backgroundColor: '#3a3a3a',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   paymentMethodText: {
-    fontSize: 14,
-    color: Colors.neutral[600],
+    fontSize: 13,
+    color: '#d1d5db',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   bidInfo: {
-    backgroundColor: Colors.primary[50],
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    padding: 12,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
   },
   bidLabel: {
     fontSize: 14,
-    color: Colors.primary[700],
-    fontWeight: '600',
+    color: '#60a5fa',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   bookingActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#dc2626',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#ef4444',
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   cancelButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   detailsButton: {
     flex: 1,
-    backgroundColor: Colors.primary[600],
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#3b82f6',
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   detailsButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingVertical: 60,
+    paddingHorizontal: 24,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.neutral[700],
-    marginTop: 16,
-    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginTop: 20,
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: Colors.neutral[500],
+    fontSize: 16,
+    color: '#9ca3af',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 32,
+    lineHeight: 24,
+    letterSpacing: 0.2,
   },
   searchButton: {
-    backgroundColor: Colors.primary[600],
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   searchButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
 });
