@@ -589,6 +589,19 @@ export default function TripHandlingScreen() {
 
       {/* Tabbed Bids and Bookings Section */}
       <View style={styles.bidsSection}>
+        <View style={styles.headerActions}>
+            <View style={[styles.connectionStatus, isConnected && styles.connected]}>
+              <Text style={[styles.connectionText, isConnected && styles.connectedText]}>
+                {isConnected ? '🟢 Live' : '🔴 Offline'}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => {
+              loadBids();
+              loadBookings();
+            }} style={styles.refreshButton}>
+              <Text style={styles.refreshButtonText}>🔄 Refresh</Text>
+            </TouchableOpacity>
+          </View>
         <View style={styles.bidsHeader}>
           <View style={styles.tabContainer}>
             <TouchableOpacity 
@@ -608,20 +621,9 @@ export default function TripHandlingScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.headerActions}>
-            <View style={[styles.connectionStatus, isConnected && styles.connected]}>
-              <Text style={[styles.connectionText, isConnected && styles.connectedText]}>
-                {isConnected ? '🟢 Live' : '🔴 Offline'}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => {
-              loadBids();
-              loadBookings();
-            }} style={styles.refreshButton}>
-              <Text style={styles.refreshButtonText}>🔄 Refresh</Text>
-            </TouchableOpacity>
-          </View>
+         
         </View>
+         
         
         {activeTab === 'bids' ? (
           bids.filter(bid => bid.status !== 'booked').length === 0 ? (
@@ -732,24 +734,25 @@ export default function TripHandlingScreen() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#f7f7f7' 
+    backgroundColor: '#0f0f0f', 
+    paddingTop: 45,
   },
   
   loadingContainer: { 
     flex: 1, 
     justifyContent: 'center', 
     alignItems: 'center',
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#0f0f0f',
   },
   loadingText: { 
     marginTop: 12, 
     fontSize: 16, 
-    color: '#6b7280' 
+    color: '#a1a1aa' 
   },
 
   // Trip info header
   tripInfoCard: { 
-    backgroundColor: '#fff', 
+    backgroundColor: '#1a1a1a', 
     padding: 16, 
     marginBottom: 8,
     shadowColor: '#000',
@@ -767,24 +770,24 @@ const styles = StyleSheet.create({
   backButton: { 
     paddingVertical: 8, 
     paddingHorizontal: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#27272a',
     borderRadius: 8,
   },
   backButtonText: { 
-    color: '#374151', 
+    color: '#ffffff', 
     fontWeight: '600' 
   },
   tripTitle: { 
     fontSize: 18, 
     fontWeight: '700', 
-    color: '#111827' 
+    color: '#ffffff' 
   },
   placeholder: { 
     width: 60 
   },
   routeText: { 
     fontSize: 14, 
-    color: '#111827', 
+    color: '#ffffff', 
     marginBottom: 4 
   },
   tripMeta: { 
@@ -794,11 +797,11 @@ const styles = StyleSheet.create({
   },
   metaText: { 
     fontSize: 12, 
-    color: '#6b7280' 
+    color: '#a1a1aa' 
   },
   basePriceText: { 
     fontSize: 12, 
-    color: '#2563eb', 
+    color: '#3b82f6', 
     fontWeight: '600' 
   },
 
@@ -809,7 +812,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: '#27272a',
   },
   bidStatsText: {
     fontSize: 11,
@@ -819,11 +822,11 @@ const styles = StyleSheet.create({
 
   // Map
   mapContainer: { 
-    height: 250, 
+    height: 150, 
     margin: 12, 
     borderRadius: 12, 
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
   },
   map: { 
     width: '100%', 
@@ -840,7 +843,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.1)',
   },
   mapOverlayText: {
-    color: '#6b7280',
+    color: '#a1a1aa',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -848,7 +851,7 @@ const styles = StyleSheet.create({
   // Bids section
   bidsSection: { 
     flex: 1, 
-    backgroundColor: '#fff', 
+    backgroundColor: '#1a1a1a', 
     marginHorizontal: 12, 
     borderRadius: 12,
     shadowColor: '#000',
@@ -863,17 +866,18 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     padding: 16, 
     borderBottomWidth: 1, 
-    borderBottomColor: '#e5e7eb' 
+    borderBottomColor: '#27272a' 
   },
   bidsTitle: { 
     fontSize: 16, 
     fontWeight: '700', 
-    color: '#111827' 
+    color: '#ffffff' 
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    gap: 60,
   },
   connectionStatus: {
     paddingHorizontal: 8,
@@ -895,12 +899,12 @@ const styles = StyleSheet.create({
   refreshButton: { 
     paddingVertical: 6, 
     paddingHorizontal: 12, 
-    backgroundColor: '#f3f4f6', 
+    backgroundColor: '#27272a', 
     borderRadius: 6 
   },
   refreshButtonText: { 
     fontSize: 12, 
-    color: '#374151', 
+    color: '#ffffff', 
     fontWeight: '600' 
   },
 
@@ -911,13 +915,13 @@ const styles = StyleSheet.create({
   bidItem: { 
     padding: 16, 
     borderBottomWidth: 1, 
-    borderBottomColor: '#f3f4f6' 
+    borderBottomColor: '#27272a' 
   },
   topBidItem: { 
-    backgroundColor: '#fef3c7' 
+    backgroundColor: '#fbbf2430' 
   },
   acceptedBidItem: { 
-    backgroundColor: '#f0fdf4' 
+    backgroundColor: '#10b98130' 
   },
   bidHeader: { 
     flexDirection: 'row', 
@@ -961,7 +965,7 @@ const styles = StyleSheet.create({
   bidPrice: { 
     fontSize: 18, 
     fontWeight: '700', 
-    color: '#111827' 
+    color: '#ffffff' 
   },
   topBidPrice: { 
     color: '#f59e0b', 
@@ -972,24 +976,24 @@ const styles = StyleSheet.create({
   passengerInfo: {
     marginBottom: 8,
     padding: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#27272a',
     borderRadius: 8,
   },
   passengerName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: '#ffffff',
     marginBottom: 4,
   },
   passengerContact: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#a1a1aa',
     marginBottom: 2,
   },
 
   pickupText: { 
     fontSize: 14, 
-    color: '#374151', 
+    color: '#ffffff', 
     marginBottom: 8 
   },
   bidMeta: { 
@@ -1000,7 +1004,7 @@ const styles = StyleSheet.create({
   },
   bidTime: { 
     fontSize: 12, 
-    color: '#6b7280' 
+    color: '#a1a1aa' 
   },
   bidStatus: { 
     fontSize: 12, 
@@ -1018,12 +1022,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 6,
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#27272a',
   },
   actionButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#374151',
+    color: '#ffffff',
   },
   callButton: {
     backgroundColor: '#3b82f6',
@@ -1052,20 +1056,20 @@ const styles = StyleSheet.create({
   },
   emptyText: { 
     fontSize: 16, 
-    color: '#6b7280', 
+    color: '#a1a1aa', 
     textAlign: 'center',
     marginBottom: 4,
   },
   emptySubText: { 
     fontSize: 14, 
-    color: '#9ca3af', 
+    color: '#71717a', 
     textAlign: 'center' 
   },
 
   // Modal styles
   modalContainer: { 
     flex: 1, 
-    backgroundColor: '#fff' 
+    backgroundColor: '#1a1a1a' 
   },
   modalHeader: { 
     flexDirection: 'row', 
@@ -1073,18 +1077,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#27272a',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: '#3f3f46',
   },
   modalTitle: { 
     fontSize: 18, 
     fontWeight: '700', 
-    color: '#111827' 
+    color: '#ffffff' 
   },
   modalCancelText: { 
     fontSize: 16, 
-    color: '#2563eb', 
+    color: '#3b82f6', 
     fontWeight: '600' 
   },
   modalPlaceholder: { 
@@ -1101,18 +1105,18 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
+    color: '#a1a1aa',
     marginBottom: 4,
   },
   detailValue: {
     fontSize: 16,
-    color: '#111827',
+    color: '#ffffff',
     marginBottom: 2,
   },
   priceText: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2563eb',
+    color: '#3b82f6',
   },
 
   // Modal actions
@@ -1145,7 +1149,7 @@ const styles = StyleSheet.create({
   // Tab styles
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#27272a',
     borderRadius: 8,
     padding: 2,
   },
@@ -1157,7 +1161,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   activeTab: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -1167,9 +1171,9 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
+    color: '#a1a1aa',
   },
   activeTabText: {
-    color: '#111827',
+    color: '#ffffff',
   },
 });
