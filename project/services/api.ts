@@ -100,10 +100,10 @@ export interface AuthResponse {
   token: string;
 }
 
-const API_BASE_URL = 'http://192.168.255.138:9000';
+const API_BASE_URL = 'http://192.168.159.138:9000';
 
 // WebSocket configuration - use local IP when using dev tunnels
-const WS_HOST = '192.168.255.138'; // Your local IP address
+const WS_HOST = '192.168.159.138'; // Your local IP address
 
 
 class ApiService {
