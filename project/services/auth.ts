@@ -118,7 +118,7 @@ class AuthService {
 
   async logout(): Promise<void> {
     try {
-      await AsyncStorage.removeItem('token');
+      
       await apiService.logout();
     } catch (error) {
       console.error('Logout error:', error);

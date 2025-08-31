@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { router } from 'expo-router';
 import { User } from '@/types';
 import { authService } from '@/services/auth';
 
@@ -45,9 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await authService.logout();
     setUser(null);
-  };
-
-  const updateUser = (userData: Partial<User>) => {
+    router.replace('/(auth)/login');
+  };  const updateUser = (userData: Partial<User>) => {
     if (user) {
       setUser({ ...user, ...userData });
     }
