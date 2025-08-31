@@ -50,7 +50,14 @@ export default function ProfileScreen() {
     setLoading(true);
     try {
       const profile = await apiService.getMyDriverProfile();
-      setDriverProfile(profile);
+      if (!profile.id) {
+        console.error('Failed to load driver profile:', profile.error);
+        setDriverProfile(null);
+        return;
+      }else{
+setDriverProfile(profile);
+      }
+      
     } catch (error) {
       console.error('Failed to load driver profile:', error);
       // Driver profile might not exist yet or user might not be fully registered

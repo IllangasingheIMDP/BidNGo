@@ -5,10 +5,11 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
-
+import { LogBox } from 'react-native';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  LogBox.ignoreAllLogs();
   useFrameworkReady();
 
   const [fontsLoaded] = useFonts({

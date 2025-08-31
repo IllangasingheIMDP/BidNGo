@@ -15,6 +15,7 @@ bal run --watch
 then if you are using personal hotspot,
 copy your pc's ip and then in the api.ts in the frontend
 as base url,put http://ip:9000
+and ip for ws host in api.ts file
 
 if you are using uom wifi
 in the vs code in ports
@@ -27,10 +28,6 @@ https://sjt6dkzd-9000.inc1.devtunnels.ms
 then in the frontend,
 ```
 npm i
-then npm run dev
-```
-if you want to see the map you have to use 
-```
 npx expo run:android
 ```
-while connecting to usb
+
