@@ -100,7 +100,7 @@ export interface AuthResponse {
   token: string;
 }
 
-const API_BASE_URL = 'http://10.30.240.137:9000';
+const API_BASE_URL = 'http://192.168.255.138:9000';
 
 class ApiService {
   private async getToken(): Promise<string | null> {

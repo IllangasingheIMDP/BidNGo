@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, Search, Calendar, User, Car } from 'lucide-react-native';
+import { Chrome as Home, Calendar, User, Car } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -37,26 +37,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="driver"
         options={{
-          title: 'Search',
+          title: 'Drive',
           tabBarIcon: ({ size, color }) => (
-            <Search size={size} color={color} />
+            <Car size={size} color={color} />
           ),
+          href: isDriver ? '/driver' : null,
         }}
       />
-      {isDriver && (
-        <Tabs.Screen
-          key="driver-tab"
-          name="driver"
-          options={{
-            title: 'Drive',
-            tabBarIcon: ({ size, color }) => (
-              <Car size={size} color={color} />
-            ),
-          }}
-        />
-      )}
       <Tabs.Screen
         name="bookings"
         options={{
