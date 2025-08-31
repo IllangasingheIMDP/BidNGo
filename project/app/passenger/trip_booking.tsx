@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Alert, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Alert, Platform, Modal, ScrollView } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { router } from 'expo-router';
 import LocationPicker from '../../components/LocationPicker';
-import { apiService, BackendTrip } from '../../services/api';
+import { apiService, BackendTrip, DriverProfile } from '../../services/api';
+import { User } from '../../types';
 
 type LocationResult = { lat: number; lng: number; address: string };
 
@@ -20,8 +21,36 @@ export default function TripBookingScreen() {
 	const [routeCoords, setRouteCoords] = useState<Array<{ latitude: number; longitude: number }>>([]);
 	const [locationsConfirmed, setLocationsConfirmed] = useState(false);
 	const [showLocationPicker, setShowLocationPicker] = useState(false);
+	const [showDriverModal, setShowDriverModal] = useState(false);
+	const [selectedDriver, setSelectedDriver] = useState<{ user: User; profile: DriverProfile | null; trip: BackendTrip } | null>(null);
+	const [loadingDriver, setLoadingDriver] = useState(false);
 
 	const topTrip = useMemo(() => (results.length > 0 ? results[0] : null), [results]);
+
+	const showDriverDetails = async (trip: BackendTrip) => {
+		try {
+			setLoadingDriver(true);
+			setShowDriverModal(true);
+			
+			// First get the driver's user info
+			const driverUser = await apiService.getUserById(trip.driver_user_id);
+			
+			// Try to get driver profile for additional details
+			let driverProfile: DriverProfile | null = null;
+			try {
+				driverProfile = await apiService.getDriverProfileByUserId(trip.driver_user_id);
+			} catch (error) {
+				console.log('Driver profile not found, showing basic user info only');
+			}
+
+			setSelectedDriver({ user: driverUser, profile: driverProfile, trip });
+		} catch (error: any) {
+			Alert.alert('Error', 'Could not load driver details: ' + (error?.message || 'Unknown error'));
+			setShowDriverModal(false);
+		} finally {
+			setLoadingDriver(false);
+		}
+	};
 
 	const onLocationsSelected = (o: LocationResult, d: LocationResult) => {
 		setOrigin(o);
@@ -128,9 +157,9 @@ export default function TripBookingScreen() {
 			<View style={styles.tripActions}>
 				<TouchableOpacity 
 					style={styles.viewDetailsButton}
-					onPress={() => Alert.alert('Trip Details', `Full details for trip #${item.id} would be shown here.`)}
+					onPress={() => showDriverDetails(item)}
 				>
-					<Text style={styles.viewDetailsText}>View Details</Text>
+					<Text style={styles.viewDetailsText}>View Driver Details</Text>
 				</TouchableOpacity>
 				<TouchableOpacity 
 					style={styles.bookButton}
@@ -227,6 +256,168 @@ export default function TripBookingScreen() {
 						initialOrigin={origin}
 						initialDestination={destination}
 					/>
+				</View>
+			</Modal>
+
+			{/* Driver Details Modal */}
+			<Modal visible={showDriverModal} animationType="slide" presentationStyle="formSheet" transparent={true}>
+				<View style={styles.driverModalOverlay}>
+					<View style={styles.driverModalContainer}>
+						{/* Modal Header */}
+						<View style={styles.driverModalHeader}>
+							<TouchableOpacity 
+								onPress={() => {
+									setShowDriverModal(false);
+									setSelectedDriver(null);
+								}}
+								style={styles.closeButton}
+							>
+								<Text style={styles.closeButtonText}>✕</Text>
+							</TouchableOpacity>
+							<Text style={styles.driverModalTitle}>Driver Details</Text>
+							<View style={styles.headerSpacer} />
+						</View>
+
+						{/* Modal Content */}
+						{loadingDriver ? (
+							<View style={styles.loadingContainer}>
+								<ActivityIndicator size="large" color="#3b82f6" />
+								<Text style={styles.loadingText}>Loading driver details...</Text>
+							</View>
+						) : selectedDriver ? (
+							<ScrollView 
+								style={styles.driverContent}
+								contentContainerStyle={styles.driverScrollContent}
+								showsVerticalScrollIndicator={true}
+								bounces={true}
+							>
+								{/* Driver Profile Section */}
+								<View style={styles.driverProfileSection}>
+									<View style={styles.driverAvatar}>
+										<Text style={styles.driverInitials}>
+											{selectedDriver.user.name?.charAt(0)?.toUpperCase() || '?'}
+										</Text>
+									</View>
+									<View style={styles.driverBasicInfo}>
+										<Text style={styles.driverName}>{selectedDriver.user.name || 'Unknown Driver'}</Text>
+										{selectedDriver.user.rating && (
+											<View style={styles.ratingContainer}>
+												<Text style={styles.ratingStars}>
+													{'★'.repeat(Math.floor(selectedDriver.user.rating))}
+													{'☆'.repeat(5 - Math.floor(selectedDriver.user.rating))}
+												</Text>
+												<Text style={styles.ratingText}>{selectedDriver.user.rating.toFixed(1)}/5</Text>
+											</View>
+										)}
+										<View style={styles.verificationBadge}>
+											<Text style={styles.verificationText}>
+												{selectedDriver.profile?.verificationStatus === 'approved' ? '✅ Verified Driver' : '⏳ Pending Verification'}
+											</Text>
+										</View>
+									</View>
+								</View>
+
+								{/* Contact Information */}
+								<View style={styles.infoSection}>
+									<Text style={styles.sectionTitle}>📞 Contact Information</Text>
+									<View style={styles.infoRow}>
+										<Text style={styles.infoLabel}>Phone:</Text>
+										<Text style={styles.infoValue}>{selectedDriver.user.phone || 'Not provided'}</Text>
+									</View>
+									<View style={styles.infoRow}>
+										<Text style={styles.infoLabel}>Email:</Text>
+										<Text style={styles.infoValue}>{selectedDriver.user.email}</Text>
+									</View>
+								</View>
+
+								{/* Vehicle Information */}
+								{selectedDriver.profile && (
+									<View style={styles.infoSection}>
+										<Text style={styles.sectionTitle}>🚗 Vehicle Information</Text>
+										<View style={styles.infoRow}>
+											<Text style={styles.infoLabel}>Model:</Text>
+											<Text style={styles.infoValue}>{selectedDriver.profile.vehicleModel}</Text>
+										</View>
+										<View style={styles.infoRow}>
+											<Text style={styles.infoLabel}>Registration:</Text>
+											<Text style={styles.infoValue}>{selectedDriver.profile.vehicleRegNumber}</Text>
+										</View>
+										<View style={styles.infoRow}>
+											<Text style={styles.infoLabel}>License:</Text>
+											<Text style={styles.infoValue}>{selectedDriver.profile.licenseNumber}</Text>
+										</View>
+									</View>
+								)}
+
+								{/* Trip Information */}
+								<View style={styles.infoSection}>
+									<Text style={styles.sectionTitle}>🎯 Trip Information</Text>
+									<View style={styles.infoRow}>
+										<Text style={styles.infoLabel}>Available Seats:</Text>
+										<Text style={styles.infoValue}>{selectedDriver.trip.available_seats}</Text>
+									</View>
+									<View style={styles.infoRow}>
+										<Text style={styles.infoLabel}>Base Price:</Text>
+										<Text style={styles.priceValue}>LKR {selectedDriver.trip.base_price.toFixed(2)}</Text>
+									</View>
+									<View style={styles.infoRow}>
+										<Text style={styles.infoLabel}>Departure:</Text>
+										<Text style={styles.infoValue}>{new Date(selectedDriver.trip.departure_datetime).toLocaleString()}</Text>
+									</View>
+									{selectedDriver.trip.notes && (
+										<View style={styles.notesContainer}>
+											<Text style={styles.infoLabel}>Notes:</Text>
+											<Text style={styles.notesText}>{selectedDriver.trip.notes}</Text>
+										</View>
+									)}
+								</View>
+
+								{/* Action Buttons */}
+								<View style={styles.actionButtonsContainer}>
+									{selectedDriver.user.phone && (
+										<TouchableOpacity 
+											style={styles.contactButton}
+											onPress={() => {
+												Alert.alert(
+													'Contact Driver',
+													`Phone: ${selectedDriver.user.phone}\nEmail: ${selectedDriver.user.email}`,
+													[
+														{ text: 'Close', style: 'cancel' },
+														{ text: 'Call', onPress: () => {
+															// You could implement actual calling functionality here
+															Alert.alert('Call Feature', 'Calling functionality would be implemented here');
+														}}
+													]
+												);
+											}}
+										>
+											<Text style={styles.contactButtonText}>📞 Contact Driver</Text>
+										</TouchableOpacity>
+									)}
+									<TouchableOpacity 
+										style={styles.placeBidButton}
+										onPress={() => {
+											setShowDriverModal(false);
+											setSelectedDriver(null);
+											// Navigate to bidding with the trip data
+											router.push({
+												pathname: '/passenger/trip_bidding' as any,
+												params: {
+													tripId: selectedDriver.trip.id.toString(),
+													tripData: JSON.stringify(selectedDriver.trip),
+													pickupLat: origin?.lat.toString() || '',
+													pickupLng: origin?.lng.toString() || '',
+													pickupAddress: origin?.address || '',
+												}
+											});
+										}}
+									>
+										<Text style={styles.placeBidButtonText}>💰 Place Bid</Text>
+									</TouchableOpacity>
+								</View>
+							</ScrollView>
+						) : null}
+					</View>
 				</View>
 			</Modal>
 
@@ -631,7 +822,9 @@ const styles = StyleSheet.create({
 		flex: 1, 
 		backgroundColor: '#6b7280', 
 		paddingVertical: 14, 
+		paddingHorizontal: 10,
 		borderRadius: 16, 
+		justifyContent: 'center',
 		alignItems: 'center',
 		shadowColor: '#6b7280',
 		shadowOffset: { width: 0, height: 4 },
@@ -705,5 +898,235 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: 'rgba(59, 130, 246, 0.3)',
 		letterSpacing: 0.2,
+	},
+
+	// Driver Modal Styles
+	driverModalOverlay: {
+		flex: 1,
+		backgroundColor: 'rgba(0, 0, 0, 0.8)',
+		justifyContent: 'flex-end',
+	},
+	driverModalContainer: {
+		backgroundColor: '#1a1a1a',
+		borderTopLeftRadius: 24,
+		borderTopRightRadius: 24,
+		maxHeight: '90%',
+		minHeight: '70%',
+	},
+	driverModalHeader: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		paddingHorizontal: 24,
+		paddingVertical: 20,
+		borderBottomWidth: 1,
+		borderBottomColor: '#2a2a2a',
+	},
+	closeButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: '#2a2a2a',
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+	closeButtonText: {
+		color: '#ffffff',
+		fontSize: 18,
+		fontWeight: '600',
+	},
+	driverModalTitle: {
+		fontSize: 20,
+		fontWeight: '800',
+		color: '#ffffff',
+		letterSpacing: 0.5,
+	},
+	headerSpacer: {
+		width: 40,
+	},
+	loadingContainer: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingVertical: 60,
+	},
+	loadingText: {
+		color: '#9ca3af',
+		fontSize: 16,
+		marginTop: 16,
+		fontWeight: '500',
+	},
+	driverContent: {
+		flex: 1,
+		paddingHorizontal: 24,
+	},
+	driverScrollContent: {
+		paddingBottom: 24,
+	},
+	driverProfileSection: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		paddingVertical: 24,
+		borderBottomWidth: 1,
+		borderBottomColor: '#2a2a2a',
+		
+	},
+	driverAvatar: {
+		width: 70,
+		height: 70,
+		borderRadius: 35,
+		backgroundColor: '#3b82f6',
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginRight: 20,
+		shadowColor: '#3b82f6',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
+	},
+	driverInitials: {
+		color: '#ffffff',
+		fontSize: 28,
+		fontWeight: '800',
+		letterSpacing: 0.5,
+	},
+	driverBasicInfo: {
+		flex: 1,
+	},
+	driverName: {
+		fontSize: 22,
+		fontWeight: '800',
+		color: '#ffffff',
+		marginBottom: 8,
+		letterSpacing: 0.3,
+	},
+	ratingContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginBottom: 8,
+	},
+	ratingStars: {
+		fontSize: 16,
+		color: '#fbbf24',
+		marginRight: 8,
+	},
+	ratingText: {
+		fontSize: 14,
+		color: '#d1d5db',
+		fontWeight: '600',
+	},
+	verificationBadge: {
+		alignSelf: 'flex-start',
+		backgroundColor: 'rgba(34, 197, 94, 0.1)',
+		paddingHorizontal: 12,
+		paddingVertical: 6,
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: 'rgba(34, 197, 94, 0.3)',
+	},
+	verificationText: {
+		fontSize: 12,
+		color: '#22c55e',
+		fontWeight: '600',
+		letterSpacing: 0.3,
+	},
+	infoSection: {
+		paddingVertical: 20,
+		borderBottomWidth: 1,
+		borderBottomColor: '#2a2a2a',
+	},
+	sectionTitle: {
+		fontSize: 18,
+		fontWeight: '700',
+		color: '#ffffff',
+		marginBottom: 16,
+		letterSpacing: 0.3,
+	},
+	infoRow: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		paddingVertical: 8,
+		paddingHorizontal: 16,
+		backgroundColor: '#262626',
+		borderRadius: 12,
+		marginBottom: 8,
+	},
+	infoLabel: {
+		fontSize: 14,
+		color: '#9ca3af',
+		fontWeight: '600',
+		flex: 1,
+	},
+	infoValue: {
+		fontSize: 14,
+		color: '#ffffff',
+		fontWeight: '500',
+		flex: 2,
+		textAlign: 'right',
+	},
+	priceValue: {
+		fontSize: 16,
+		color: '#3b82f6',
+		fontWeight: '700',
+		flex: 2,
+		textAlign: 'right',
+		letterSpacing: 0.3,
+	},
+	notesContainer: {
+		backgroundColor: '#262626',
+		borderRadius: 12,
+		padding: 16,
+		marginTop: 8,
+	},
+	notesText: {
+		fontSize: 14,
+		color: '#d1d5db',
+		fontStyle: 'italic',
+		marginTop: 8,
+		lineHeight: 20,
+	},
+	actionButtonsContainer: {
+		flexDirection: 'row',
+		gap: 12,
+		paddingTop: 24,
+		paddingBottom: 12,
+	},
+	contactButton: {
+		flex: 1,
+		backgroundColor: '#6b7280',
+		paddingVertical: 16,
+		borderRadius: 16,
+		alignItems: 'center',
+		shadowColor: '#6b7280',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
+	},
+	contactButtonText: {
+		color: '#ffffff',
+		fontSize: 16,
+		fontWeight: '700',
+		letterSpacing: 0.5,
+	},
+	placeBidButton: {
+		flex: 1,
+		backgroundColor: '#3b82f6',
+		paddingVertical: 16,
+		borderRadius: 16,
+		alignItems: 'center',
+		shadowColor: '#3b82f6',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
+	},
+	placeBidButtonText: {
+		color: '#ffffff',
+		fontSize: 16,
+		fontWeight: '700',
+		letterSpacing: 0.5,
 	},
 });
