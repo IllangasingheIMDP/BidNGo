@@ -204,7 +204,7 @@ npx expo start
 # Run on Android
 npx expo run:android
 
-
+```
 ### Port Forwarding (Public WiFi)
 1. In VS Code, open the "Ports" panel
 2. Click "Forward a Port"
