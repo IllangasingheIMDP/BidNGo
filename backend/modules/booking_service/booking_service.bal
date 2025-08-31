@@ -43,14 +43,14 @@ public http:Service BookingService = @http:ServiceConfig {} service object {
 	resource function post bookings(http:Caller caller, http:Request req) returns error? {
 		json|error auth = middleware:validateJWT(req);
 		if auth is error { check caller->respond({ "error": "UNAUTHORIZED" }); return; }
-		string role = ""; int uid = -1;
+		string role = ""; 
 		if auth is map<json> {
 			role = check auth["role"].ensureType(string);
-			uid = check auth["id"].ensureType(int);
+			
 		}
-		if role != "passenger" { check caller->respond({ "error": "FORBIDDEN" }); return; }
+		if !(role == "passenger" || role == "driver") { check caller->respond({ "error": "FORBIDDEN" }); return; }
 		json body = check req.getJsonPayload();
-	json|error res = createBooking(body, uid);
+	json|error res = createBooking(body);
 		if res is error { check caller->respond({ "error": res.message() }); return; }
 		check caller->respond(res);
 	}

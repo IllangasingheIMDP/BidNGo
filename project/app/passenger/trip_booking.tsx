@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Alert, Platform, Modal } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { router } from 'expo-router';
 import LocationPicker from '../../components/LocationPicker';
 import { apiService, BackendTrip } from '../../services/api';
 
@@ -133,16 +134,21 @@ export default function TripBookingScreen() {
 				</TouchableOpacity>
 				<TouchableOpacity 
 					style={styles.bookButton}
-					onPress={() => Alert.alert(
-						'Book Trip', 
-						`Book this trip for LKR ${item.base_price.toFixed(2)}?\n\nFrom: ${item.origin_addr}\nTo: ${item.dest_addr}\nDeparture: ${new Date(item.departure_datetime).toLocaleString()}`,
-						[
-							{ text: 'Cancel', style: 'cancel' },
-							{ text: 'Book Now', onPress: () => Alert.alert('Success', 'Booking feature coming soon!') }
-						]
-					)}
+					onPress={() => {
+						// Navigate to bidding screen with trip and pickup location data
+						router.push({
+							pathname: '/passenger/trip_bidding' as any,
+							params: {
+								tripId: item.id.toString(),
+								tripData: JSON.stringify(item),
+								pickupLat: origin?.lat.toString() || '',
+								pickupLng: origin?.lng.toString() || '',
+								pickupAddress: origin?.address || '',
+							}
+						});
+					}}
 				>
-					<Text style={styles.bookButtonText}>Book Trip</Text>
+					<Text style={styles.bookButtonText}>Place Bid</Text>
 				</TouchableOpacity>
 			</View>
 		</View>
@@ -216,7 +222,7 @@ export default function TripBookingScreen() {
 						<View style={styles.modalPlaceholder} />
 					</View>
 					<LocationPicker
-						height={600}
+						height={700}
 						onLocationsSelected={onLocationsSelected}
 						initialOrigin={origin}
 						initialDestination={destination}
@@ -275,7 +281,7 @@ export default function TripBookingScreen() {
 					</View>
 					{loading ? (
 						<View style={{ alignItems: 'center', padding: 20 }}>
-							<ActivityIndicator size="large" color="#2563eb" />
+							<ActivityIndicator size="large" color="#3b82f6" />
 							<Text style={styles.emptyText}>Finding the best trips for you...</Text>
 						</View>
 					) : results.length === 0 ? (
@@ -288,7 +294,7 @@ export default function TripBookingScreen() {
 							data={results}
 							keyExtractor={(item) => String(item.id)}
 							renderItem={renderTripItem}
-							contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 24 }}
+							contentContainerStyle={{ paddingBottom: 24 }}
 						/>
 					)}
 				</>
@@ -314,166 +320,390 @@ export default function TripBookingScreen() {
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: '#f7f7f7' },
+	container: { 
+		flex: 1, 
+		backgroundColor: '#0a0a0a' ,
+		paddingTop:45
+	},
 	
 	// Location selection styles
 	locationSelectionContainer: { 
-		margin: 12, 
-		backgroundColor: '#fff', 
-		borderRadius: 12, 
-		padding: 16,
+		margin: 20, 
+		backgroundColor: '#1a1a1a', 
+		borderRadius: 20, 
+		padding: 20,
+		borderWidth: 1,
+		borderColor: '#2a2a2a',
 		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
+		shadowOffset: { width: 0, height: 8 },
+		shadowOpacity: 0.3,
+		shadowRadius: 12,
+		elevation: 12,
 	},
 	locationButton: { 
-		backgroundColor: '#f8f9fa',
+		backgroundColor: '#2a2a2a',
 		borderWidth: 2,
-		borderColor: '#e9ecef',
-		borderRadius: 12,
-		padding: 16,
+		borderColor: '#3a3a3a',
+		borderRadius: 16,
+		padding: 20,
 		borderStyle: 'dashed',
 	},
 	selectedLocationButton: {
-		backgroundColor: '#e3f2fd',
-		borderColor: '#2563eb',
+		backgroundColor: 'rgba(59, 130, 246, 0.1)',
+		borderColor: '#3b82f6',
 		borderStyle: 'solid',
+		shadowColor: '#3b82f6',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
 	},
 	locationButtonLabel: { 
-		fontSize: 16, 
-		fontWeight: '700', 
-		color: '#2563eb', 
-		marginBottom: 8,
+		fontSize: 18, 
+		fontWeight: '800', 
+		color: '#3b82f6', 
+		marginBottom: 12,
+		letterSpacing: 0.5,
 	},
 	locationText: { 
-		fontSize: 14, 
-		color: '#111827', 
-		marginBottom: 4,
+		fontSize: 15, 
+		color: '#ffffff', 
+		marginBottom: 6,
+		fontWeight: '600',
+		letterSpacing: 0.3,
 	},
 	placeholderText: { 
-		fontSize: 14, 
-		color: '#6b7280', 
+		fontSize: 15, 
+		color: '#9ca3af', 
 		fontStyle: 'italic',
+		letterSpacing: 0.2,
 	},
 	actionButtonsRow: { 
 		flexDirection: 'row', 
-		gap: 10, 
-		marginTop: 12,
+		gap: 12, 
+		marginTop: 16,
 	},
 	clearButton: { 
 		backgroundColor: '#6b7280',
-		paddingHorizontal: 16,
-		paddingVertical: 10,
-		borderRadius: 8,
+		paddingHorizontal: 20,
+		paddingVertical: 14,
+		borderRadius: 16,
 		flex: 1,
 		alignItems: 'center',
+		shadowColor: '#6b7280',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
 	},
 	clearButtonText: { 
-		color: '#fff', 
-		fontWeight: '600',
+		color: '#ffffff', 
+		fontWeight: '700',
+		letterSpacing: 0.5,
+		textTransform: 'uppercase',
 	},
 	searchButton: { 
-		backgroundColor: '#2563eb', 
-		paddingVertical: 12, 
-		borderRadius: 8, 
+		backgroundColor: '#3b82f6', 
+		paddingVertical: 14, 
+		borderRadius: 16, 
 		alignItems: 'center',
 		flex: 2,
+		shadowColor: '#3b82f6',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
 	},
 	searchButtonText: { 
-		color: '#fff', 
+		color: '#ffffff', 
 		fontWeight: '700',
+		letterSpacing: 0.5,
+		textTransform: 'uppercase',
 	},
 
 	// Modal styles
 	modalContainer: { 
 		flex: 1, 
-		backgroundColor: '#fff',
+		backgroundColor: '#1a1a1a',
+		paddingHorizontal: 20,
+		
 	},
 	modalHeader: { 
 		flexDirection: 'row', 
 		justifyContent: 'space-between', 
 		alignItems: 'center',
-		paddingHorizontal: 16,
-		paddingVertical: 12,
-		backgroundColor: '#f8f9fa',
+		paddingHorizontal: 20,
+		paddingVertical: 16,
+		
 		borderBottomWidth: 1,
-		borderBottomColor: '#e9ecef',
+		borderBottomColor: '#3a3a3a',
+		paddingTop: Platform.OS === 'ios' ? 45 : 16,
 	},
 	modalTitle: { 
-		fontSize: 18, 
-		fontWeight: '700', 
-		color: '#111827',
+		fontSize: 20, 
+		fontWeight: '800', 
+		color: '#ffffff',
+		letterSpacing: 0.5,
 	},
 	modalCancelText: { 
 		fontSize: 16, 
-		color: '#2563eb', 
-		fontWeight: '600',
+		color: '#3b82f6', 
+		fontWeight: '700',
+		letterSpacing: 0.3,
 	},
 	modalPlaceholder: { 
-		width: 60,
+
+		width: 80,
 	},
 
-	// Existing styles
-	actionsBar: { paddingHorizontal: 12, paddingBottom: 8 },
-	button: { backgroundColor: '#2563eb', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-	buttonDisabled: { opacity: 0.6 },
-	buttonText: { color: '#fff', fontWeight: '700' },
-	mapContainer: { height: 220, margin: 12, borderRadius: 12, overflow: 'hidden', backgroundColor: '#fff' },
-	map: { width: '100%', height: '100%' },
-	mapHint: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 8, backgroundColor: 'rgba(0,0,0,0.4)' },
-	mapHintText: { color: '#fff', textAlign: 'center' },
-	resultsHeader: { paddingHorizontal: 12, paddingTop: 4 },
-	resultsTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
-	emptyText: { paddingHorizontal: 12, paddingVertical: 8, color: '#6b7280' },
-	tripItem: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginTop: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
-	topTripItem: { borderWidth: 2, borderColor: '#2563eb' },
-	tripHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-	tripRankBadge: { backgroundColor: '#2563eb', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-	tripRankText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-	tripTitle: { fontWeight: '700', color: '#111827' },
-	price: { fontWeight: '800', color: '#2563eb', fontSize: 18 },
-	addr: { color: '#111827', marginBottom: 4, fontSize: 14 },
-	metaRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-	meta: { fontSize: 12, color: '#6b7280' },
-	notes: { fontSize: 12, color: '#6b7280', fontStyle: 'italic', marginBottom: 8 },
-	tripActions: { flexDirection: 'row', gap: 8, marginTop: 8 },
-	viewDetailsButton: { flex: 1, backgroundColor: '#f3f4f6', paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
-	viewDetailsText: { color: '#374151', fontWeight: '600', fontSize: 14 },
-	bookButton: { flex: 1, backgroundColor: '#2563eb', paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
-	bookButtonText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-	instructionsContainer: { 
-		margin: 12, 
-		padding: 20, 
-		backgroundColor: '#fff', 
-		borderRadius: 12, 
+	// Map and results styles
+	actionsBar: { 
+		paddingHorizontal: 20, 
+		paddingBottom: 12 
+	},
+	button: { 
+		backgroundColor: '#3b82f6', 
+		paddingVertical: 16, 
+		borderRadius: 16, 
+		alignItems: 'center',
+		shadowColor: '#3b82f6',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
+	},
+	buttonDisabled: { 
+		opacity: 0.6 
+	},
+	buttonText: { 
+		color: '#ffffff', 
+		fontWeight: '700',
+		letterSpacing: 0.5,
+		textTransform: 'uppercase',
+	},
+	mapContainer: { 
+		height: 100,
+		 
+		margin: 20, 
+		borderRadius: 20, 
+		overflow: 'hidden', 
+		backgroundColor: '#1a1a1a',
+		borderWidth: 1,
+		borderColor: '#2a2a2a',
 		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 8 },
+		shadowOpacity: 0.3,
+		shadowRadius: 12,
+		elevation: 12,
+	},
+	map: { 
+		width: '100%', 
+		height: '100%' 
+	},
+	mapHint: { 
+		position: 'absolute', 
+		left: 0, 
+		right: 0, 
+		bottom: 0, 
+		padding: 16, 
+		backgroundColor: 'rgba(26, 26, 26, 0.9)',
+		borderBottomLeftRadius: 20,
+		borderBottomRightRadius: 20,
+	},
+	mapHintText: { 
+		color: '#ffffff', 
+		textAlign: 'center',
+		fontSize: 14,
+		fontWeight: '600',
+		letterSpacing: 0.3,
+	},
+	resultsHeader: { 
+		paddingHorizontal: 20, 
+		paddingTop: 8,
+		paddingBottom: 12,
+	},
+	resultsTitle: { 
+		fontSize: 20, 
+		fontWeight: '800', 
+		color: '#ffffff',
+		letterSpacing: 0.5,
+	},
+	emptyText: { 
+		paddingHorizontal: 20, 
+		paddingVertical: 12, 
+		color: '#9ca3af',
+		fontSize: 16,
+		textAlign: 'center',
+		letterSpacing: 0.2,
+	},
+	tripItem: { 
+		backgroundColor: '#1a1a1a', 
+		padding: 20, 
+		borderRadius: 20, 
+		marginHorizontal: 20,
+		marginBottom: 16, 
+		borderWidth: 1,
+		borderColor: '#2a2a2a',
+		shadowColor: '#000', 
+		shadowOffset: { width: 0, height: 8 }, 
+		shadowOpacity: 0.3, 
+		shadowRadius: 12, 
+		elevation: 12,
+	},
+	topTripItem: { 
+		borderWidth: 2, 
+		borderColor: '#3b82f6',
+		shadowColor: '#3b82f6',
+		shadowOpacity: 0.4,
+	},
+	tripHeader: { 
+		flexDirection: 'row', 
+		justifyContent: 'space-between', 
+		alignItems: 'center', 
+		marginBottom: 16,
+	},
+	tripRankBadge: { 
+		backgroundColor: '#3b82f6', 
+		paddingHorizontal: 12, 
+		paddingVertical: 6, 
+		borderRadius: 20,
+		shadowColor: '#3b82f6',
 		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
+		shadowOpacity: 0.3,
 		shadowRadius: 4,
-		elevation: 3,
+		elevation: 4,
+	},
+	tripRankText: { 
+		color: '#ffffff', 
+		fontSize: 12, 
+		fontWeight: '700',
+		letterSpacing: 0.5,
+		textTransform: 'uppercase',
+	},
+	tripTitle: { 
+		fontWeight: '800', 
+		color: '#ffffff',
+		letterSpacing: 0.3,
+	},
+	price: { 
+		fontWeight: '800', 
+		color: '#3b82f6', 
+		fontSize: 20,
+		letterSpacing: 0.3,
+	},
+	addr: { 
+		color: '#d1d5db', 
+		marginBottom: 6, 
+		fontSize: 15,
+		fontWeight: '500',
+		letterSpacing: 0.2,
+	},
+	metaRow: { 
+		flexDirection: 'row', 
+		justifyContent: 'space-between', 
+		marginBottom: 12,
+		backgroundColor: '#262626',
+		padding: 12,
+		borderRadius: 12,
+	},
+	meta: { 
+		fontSize: 13, 
+		color: '#9ca3af',
+		fontWeight: '600',
+		letterSpacing: 0.2,
+	},
+	notes: { 
+		fontSize: 13, 
+		color: '#9ca3af', 
+		fontStyle: 'italic', 
+		marginBottom: 16,
+		backgroundColor: '#262626',
+		padding: 12,
+		borderRadius: 12,
+		letterSpacing: 0.2,
+	},
+	tripActions: { 
+		flexDirection: 'row', 
+		gap: 12, 
+		marginTop: 8,
+	},
+	viewDetailsButton: { 
+		flex: 1, 
+		backgroundColor: '#6b7280', 
+		paddingVertical: 14, 
+		borderRadius: 16, 
+		alignItems: 'center',
+		shadowColor: '#6b7280',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
+	},
+	viewDetailsText: { 
+		color: '#ffffff', 
+		fontWeight: '700', 
+		fontSize: 14,
+		letterSpacing: 0.5,
+		textTransform: 'uppercase',
+	},
+	bookButton: { 
+		flex: 1, 
+		backgroundColor: '#3b82f6', 
+		paddingVertical: 14, 
+		borderRadius: 16, 
+		alignItems: 'center',
+		shadowColor: '#3b82f6',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
+	},
+	bookButtonText: { 
+		color: '#ffffff', 
+		fontWeight: '700', 
+		fontSize: 14,
+		letterSpacing: 0.5,
+		textTransform: 'uppercase',
+	},
+	instructionsContainer: { 
+		margin: 20, 
+		padding: 24, 
+		backgroundColor: '#1a1a1a', 
+		borderRadius: 20, 
+		borderWidth: 1,
+		borderColor: '#2a2a2a',
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 8 },
+		shadowOpacity: 0.3,
+		shadowRadius: 12,
+		elevation: 12,
 	},
 	instructionsTitle: { 
-		fontSize: 20, 
-		fontWeight: '700', 
-		color: '#111827', 
-		marginBottom: 12,
+		fontSize: 24, 
+		fontWeight: '800', 
+		color: '#ffffff', 
+		marginBottom: 16,
 		textAlign: 'center',
+		letterSpacing: 0.5,
 	},
 	instructionsText: { 
 		fontSize: 16, 
-		color: '#4b5563', 
-		lineHeight: 24,
-		marginBottom: 16,
+		color: '#d1d5db', 
+		lineHeight: 26,
+		marginBottom: 20,
+		fontWeight: '500',
+		letterSpacing: 0.2,
 	},
 	tipText: { 
 		fontSize: 14, 
-		color: '#6366f1', 
+		color: '#60a5fa', 
 		fontStyle: 'italic',
 		textAlign: 'center',
-		backgroundColor: '#eef2ff',
-		padding: 12,
-		borderRadius: 8,
+		backgroundColor: 'rgba(59, 130, 246, 0.1)',
+		padding: 16,
+		borderRadius: 16,
+		borderWidth: 1,
+		borderColor: 'rgba(59, 130, 246, 0.3)',
+		letterSpacing: 0.2,
 	},
 });

@@ -128,7 +128,9 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your Recent Trips</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/driver')} style={styles.seeAllBtn} activeOpacity={0.7}>
+
+            <TouchableOpacity onPress={() => router.push('/driver/trips_list')}>
+
               <Text style={styles.seeAll}>Manage all</Text>
               <ArrowRight size={16} color="#3b82f6" />
             </TouchableOpacity>
@@ -150,7 +152,17 @@ export default function HomeScreen() {
           ) : (
             <View style={styles.tripsList}>
               {(myTrips || []).slice(0, 2).map((trip) => (
-                <View key={trip.id} style={styles.tripCard}>
+                <TouchableOpacity 
+                  key={trip.id} 
+                  style={styles.tripCard}
+                  onPress={() => router.push({
+                    pathname: '/driver/trip_handling' as any,
+                    params: {
+                      tripId: trip.id.toString(),
+                      tripData: JSON.stringify(trip),
+                    }
+                  })}
+                >
                   <View style={styles.tripHeader}>
                     <Text style={styles.tripRoute}>
                       {trip.origin_addr} <ArrowRight size={16} color="#3b82f6" /> {trip.dest_addr}
@@ -162,7 +174,8 @@ export default function HomeScreen() {
                     {new Date(trip.departure_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                   <Text style={styles.tripSeats}>{trip.available_seats} seats available</Text>
-                </View>
+                  <Text style={styles.tapHint}>Tap to manage bids</Text>
+                </TouchableOpacity>
               ))}
             </View>
           )}
@@ -195,16 +208,18 @@ export default function HomeScreen() {
 
       <View style={styles.quickActions}>
         <QuickSearchCard
-          icon={<MapPin size={24} color="#3b82f6" />}
-          title="Popular Routes"
-          subtitle="Colombo ↔ Kandy"
+
+          icon={<MapPin size={24} color={Colors.primary[600]} />}
+          title="Book a Trip"
+          subtitle="Search and Bid"
           onPress={navigateToSearch}
         />
         <QuickSearchCard
-          icon={<Clock size={24} color="#3b82f6" />}
-          title="Quick Book"
-          subtitle="Next 2 hours"
-          onPress={navigateToSearch}
+          icon={<Clock size={24} color={Colors.secondary[600]} />}
+          title="My Bookings"
+          subtitle="View & manage"
+          onPress={() => router.push('/passenger/booked')}
+
         />
       </View>
 
@@ -213,7 +228,9 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Upcoming Trips</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/bookings')} style={styles.seeAllBtn} activeOpacity={0.7}>
+
+            <TouchableOpacity onPress={() => router.push('/passenger/booked')}>
+
               <Text style={styles.seeAll}>See all</Text>
               <ArrowRight size={16} color="#3b82f6" />
             </TouchableOpacity>
@@ -503,6 +520,13 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.sm,
     fontFamily: 'Inter-Regular',
     color: '#a1a1aa',
+  },
+  tapHint: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: 'Inter-Regular',
+    color: Colors.primary[600],
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   emptyAction: {
     backgroundColor: '#3b82f6',

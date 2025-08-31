@@ -102,6 +102,10 @@ export interface AuthResponse {
 
 const API_BASE_URL = 'http://192.168.255.138:9000';
 
+// WebSocket configuration - use local IP when using dev tunnels
+const WS_HOST = '192.168.255.138'; // Your local IP address
+
+
 class ApiService {
   private async getToken(): Promise<string | null> {
     try {
@@ -433,14 +437,28 @@ class ApiService {
     if (this.bidWs && (this.bidWs.readyState === WebSocket.OPEN || this.bidWs.readyState === WebSocket.CONNECTING)) {
       return; // already connecting/connected
     }
-    const host = hostOverride || API_BASE_URL.replace(/^https?:\/\//, '').replace(/:\\d+$/, '');
+    
+    // Use explicit WebSocket host or fallback to extracting from API_BASE_URL
+    let host = WS_HOST;
+    if (!host) {
+      // Extract host from API_BASE_URL as fallback
+      host = API_BASE_URL.replace(/^https?:\/\//, '').replace(/:\d+.*$/, '');
+    }
+    
     // Backend WS listener runs on port 21003, path /ws
     const url = `ws://${host}:21003/ws`;
+    console.log('Connecting to WebSocket:', url);
+    
     const ws = new WebSocket(url);
     this.bidWs = ws;
+    
     ws.onopen = () => {
+      console.log('WebSocket connected successfully');
       this.bidWsReconnectAttempts = 0;
+      // Notify listeners about connection status
+      this.bidWsListeners.forEach(l => l({ type: 'connection_status', connected: true }));
     };
+    
     ws.onmessage = (msg) => {
       try {
         const data = JSON.parse(msg.data as string);
@@ -450,10 +468,16 @@ class ApiService {
         this.bidWsListeners.forEach(l => l(msg.data));
       }
     };
+    
     ws.onclose = () => {
+      console.log('WebSocket connection closed');
+      // Notify listeners about disconnection
+      this.bidWsListeners.forEach(l => l({ type: 'connection_status', connected: false }));
       this.scheduleBidWsReconnect(hostOverride);
     };
-    ws.onerror = () => {
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
       ws.close();
     };
   }
@@ -470,6 +494,34 @@ class ApiService {
       this.bidWs.close();
       this.bidWs = undefined;
     }
+    this.bidWsReconnectAttempts = 0;
+  }
+
+  // Check if WebSocket is currently connected
+  isWebSocketConnected(): boolean {
+    return this.bidWs?.readyState === WebSocket.OPEN;
+  }
+
+  // Test WebSocket connection manually
+  testWebSocketConnection(): void {
+    const url = `ws://${WS_HOST}:21003/ws`;
+    console.log('Testing WebSocket connection to:', url);
+    
+    const testWs = new WebSocket(url);
+    testWs.onopen = () => {
+      console.log('✅ WebSocket test connection successful');
+      testWs.send('ping');
+    };
+    testWs.onmessage = (msg) => {
+      console.log('📩 WebSocket test message received:', msg.data);
+      testWs.close();
+    };
+    testWs.onerror = (error) => {
+      console.error('❌ WebSocket test connection failed:', error);
+    };
+    testWs.onclose = () => {
+      console.log('🔌 WebSocket test connection closed');
+    };
   }
 
   // ========== Bookings ==========
@@ -491,8 +543,9 @@ class ApiService {
     return this.request<BackendBooking[]>('/api/bookings/bookings/mine');
   }
 
-  createBooking(data: { trip_id?: number; bid_id?: number; fare: number }): Promise<{ message: string; id: number }> {
+  createBooking(data: { user_id?: number; trip_id?: number; bid_id?: number; fare: number }): Promise<{ message: string; id: number }> {
     const payload = {
+      user_id: data.user_id ?? null,
       trip_id: data.trip_id ?? null,
       bid_id: data.bid_id ?? null,
       fare: data.fare,
@@ -530,6 +583,11 @@ class ApiService {
     // Get any user by email (GET /api/users/user/:email)
     async getUserByEmail(email: string): Promise<User> {
       return this.request<User>(`/api/users/user/${encodeURIComponent(email)}`);
+    }
+
+    // Get user by ID (GET /api/users/:id) - assuming this endpoint exists
+    async getUserById(userId: number): Promise<User> {
+      return this.request<User>(`/api/users/userbyid/${userId}`);
     }
 
     // Update email (PUT /api/users/email)
