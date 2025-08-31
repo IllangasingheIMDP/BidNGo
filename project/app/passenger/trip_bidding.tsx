@@ -366,7 +366,7 @@ export default function TripBiddingScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#3b82f6" />
         <Text style={styles.loadingText}>Loading bidding data...</Text>
       </View>
     );
@@ -384,12 +384,7 @@ export default function TripBiddingScreen() {
           <View style={styles.placeholder} />
         </View>
         
-        <Text style={styles.routeText} numberOfLines={1}>
-          📍 {tripData.origin_addr}
-        </Text>
-        <Text style={styles.routeText} numberOfLines={1}>
-          🎯 {tripData.dest_addr}
-        </Text>
+        
         
         <View style={styles.tripMeta}>
           <Text style={styles.metaText}>
@@ -398,9 +393,13 @@ export default function TripBiddingScreen() {
           <Text style={styles.metaText}>
             👥 {tripData.available_seats} seats
           </Text>
-          <Text style={styles.basePriceText}>
+          
+        </View>
+        <View style={styles.tripMeta}>
+         <Text style={styles.basePriceText}>
             Base: LKR {tripData.base_price.toFixed(2)}
           </Text>
+          
         </View>
       </View>
 
@@ -491,7 +490,12 @@ export default function TripBiddingScreen() {
             data={bids}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderBidItem}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            refreshControl={<RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor="#3b82f6"
+              colors={['#3b82f6']}
+            />}
             contentContainerStyle={styles.bidsList}
             showsVerticalScrollIndicator={false}
           />
@@ -584,366 +588,472 @@ export default function TripBiddingScreen() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#f7f7f7' 
+    backgroundColor: '#0a0a0a',
+    paddingTop: 45,
   },
   
   loadingContainer: { 
     flex: 1, 
     justifyContent: 'center', 
     alignItems: 'center',
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#0a0a0a',
   },
   loadingText: { 
-    marginTop: 12, 
+    marginTop: 16, 
     fontSize: 16, 
-    color: '#6b7280' 
+    color: '#9ca3af',
+    letterSpacing: 0.5,
   },
 
   // Trip info header
   tripInfoCard: { 
-    backgroundColor: '#fff', 
-    padding: 16, 
-    marginBottom: 8,
+    backgroundColor: '#1a1a1a', 
+    padding: 20, 
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 12,
   },
   tripHeader: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center', 
-    marginBottom: 12 
+    marginBottom: 16,
   },
   backButton: { 
-    paddingVertical: 8, 
-    paddingHorizontal: 12,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
+    paddingVertical: 12, 
+    paddingHorizontal: 16,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backButtonText: { 
-    color: '#374151', 
-    fontWeight: '600' 
+    color: '#ffffff', 
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   tripTitle: { 
-    fontSize: 18, 
-    fontWeight: '700', 
-    color: '#111827' 
+    fontSize: 20, 
+    fontWeight: '800', 
+    color: '#ffffff',
+    letterSpacing: 0.5,
   },
   placeholder: { 
-    width: 60 
+    width: 80,
   },
   routeText: { 
-    fontSize: 14, 
-    color: '#111827', 
-    marginBottom: 4 
+    fontSize: 15, 
+    color: '#d1d5db', 
+    marginBottom: 6,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   tripMeta: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
-    marginTop: 8 
+    marginTop: 12,
+    backgroundColor: '#262626',
+    padding: 12,
+    borderRadius: 12,
   },
   metaText: { 
     fontSize: 12, 
-    color: '#6b7280' 
+    color: '#9ca3af',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   basePriceText: { 
     fontSize: 12, 
-    color: '#2563eb', 
-    fontWeight: '600' 
+    color: '#3b82f6', 
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 
   // Map
   mapContainer: { 
-    height: 200, 
-    margin: 12, 
-    borderRadius: 12, 
+    height: 180, 
+    marginHorizontal: 20, 
+    borderRadius: 20, 
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 12,
+    marginBottom: 16,
   },
   map: { 
     width: '100%', 
-    height: '100%' 
+    height: '100%',
   },
 
   // Actions
   actionsContainer: { 
     flexDirection: 'row', 
-    paddingHorizontal: 12, 
-    gap: 8, 
-    marginBottom: 8 
+    paddingHorizontal: 20, 
+    gap: 12, 
+    marginBottom: 16,
   },
   actionButton: { 
     flex: 1, 
-    paddingVertical: 12, 
-    borderRadius: 8, 
-    alignItems: 'center' 
+    paddingVertical: 16, 
+    borderRadius: 16, 
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   primaryButton: { 
-    backgroundColor: '#2563eb' 
+    backgroundColor: '#3b82f6',
+    shadowColor: '#3b82f6',
   },
   primaryButtonText: { 
-    color: '#fff', 
-    fontWeight: '700' 
+    color: '#ffffff', 
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   dangerButton: { 
-    backgroundColor: '#dc2626' 
+    backgroundColor: '#ef4444',
+    shadowColor: '#ef4444',
   },
   dangerButtonText: { 
-    color: '#fff', 
-    fontWeight: '600' 
+    color: '#ffffff', 
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
 
   // Bids section
   bidsSection: { 
     flex: 1, 
-    backgroundColor: '#fff', 
-    marginHorizontal: 12, 
-    borderRadius: 12,
+    backgroundColor: '#1a1a1a', 
+    marginHorizontal: 20, 
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 12,
   },
   bidsHeader: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center', 
-    padding: 16, 
+    padding: 20, 
     borderBottomWidth: 1, 
-    borderBottomColor: '#e5e7eb' 
+    borderBottomColor: '#3a3a3a',
   },
   bidsTitle: { 
-    fontSize: 16, 
-    fontWeight: '700', 
-    color: '#111827' 
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: '#ffffff',
+    letterSpacing: 0.5,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   connectionStatus: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: '#fee2e2',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   connected: {
-    backgroundColor: '#dcfce7',
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderColor: 'rgba(34, 197, 94, 0.3)',
   },
   connectionText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#dc2626',
+    fontWeight: '700',
+    color: '#ef4444',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   connectedText: {
-    color: '#16a34a',
+    color: '#22c55e',
   },
   refreshButton: { 
-    paddingVertical: 6, 
-    paddingHorizontal: 12, 
-    backgroundColor: '#f3f4f6', 
-    borderRadius: 6 
+    paddingVertical: 8, 
+    paddingHorizontal: 16, 
+    backgroundColor: '#2a2a2a', 
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   refreshButtonText: { 
     fontSize: 12, 
-    color: '#374151', 
-    fontWeight: '600' 
+    color: '#ffffff', 
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 
   // Bids list
   bidsList: { 
-    paddingBottom: 20 
+    paddingBottom: 20,
   },
   bidItem: { 
-    padding: 16, 
+    padding: 20, 
     borderBottomWidth: 1, 
-    borderBottomColor: '#f3f4f6' 
+    borderBottomColor: '#2a2a2a',
   },
   myBidItem: { 
-    backgroundColor: '#f0f9ff' 
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#3b82f6',
   },
   topBidItem: { 
-    backgroundColor: '#fef3c7' 
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
   },
   bidHeader: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center', 
-    marginBottom: 8 
+    marginBottom: 12,
   },
   bidRankContainer: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 8 
+    gap: 10,
   },
   bidRankBadge: { 
     backgroundColor: '#6b7280', 
-    paddingHorizontal: 8, 
-    paddingVertical: 4, 
-    borderRadius: 12 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   topBidBadge: { 
-    backgroundColor: '#f59e0b' 
+    backgroundColor: '#f59e0b',
+    shadowColor: '#f59e0b',
   },
   bidRankText: { 
-    color: '#fff', 
+    color: '#ffffff', 
     fontSize: 12, 
-    fontWeight: '700' 
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   topBidText: { 
-    color: '#fff' 
+    color: '#ffffff',
   },
   myBidBadge: { 
-    backgroundColor: '#2563eb', 
-    paddingHorizontal: 8, 
-    paddingVertical: 4, 
-    borderRadius: 8 
+    backgroundColor: '#3b82f6', 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 16,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   myBidText: { 
-    color: '#fff', 
+    color: '#ffffff', 
     fontSize: 10, 
-    fontWeight: '600' 
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   bidPrice: { 
-    fontSize: 16, 
-    fontWeight: '700', 
-    color: '#111827' 
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: '#ffffff',
+    letterSpacing: 0.3,
   },
   topBidPrice: { 
     color: '#f59e0b', 
-    fontSize: 18 
+    fontSize: 20,
   },
   pickupText: { 
     fontSize: 14, 
-    color: '#374151', 
-    marginBottom: 8 
+    color: '#d1d5db', 
+    marginBottom: 12,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   bidMeta: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
-    alignItems: 'center' 
+    alignItems: 'center',
   },
   bidTime: { 
     fontSize: 12, 
-    color: '#6b7280' 
+    color: '#9ca3af',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   bidStatus: { 
     fontSize: 12, 
-    fontWeight: '600' 
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
 
   // Empty state
   emptyState: { 
     padding: 40, 
-    alignItems: 'center' 
+    alignItems: 'center',
   },
   emptyText: { 
     fontSize: 16, 
-    color: '#6b7280', 
-    textAlign: 'center' 
+    color: '#9ca3af', 
+    textAlign: 'center',
+    letterSpacing: 0.2,
   },
 
   // Modal styles
   modalContainer: { 
     flex: 1, 
-    backgroundColor: '#fff' 
+    backgroundColor: '#1a1a1a',
   },
   modalHeader: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#2a2a2a',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: '#3a3a3a',
+    paddingTop: Platform.OS === 'ios' ? 45 : 16,
   },
   modalTitle: { 
-    fontSize: 18, 
-    fontWeight: '700', 
-    color: '#111827' 
+    fontSize: 20, 
+    fontWeight: '800', 
+    color: '#ffffff',
+    letterSpacing: 0.5,
   },
   modalCancelText: { 
     fontSize: 16, 
-    color: '#2563eb', 
-    fontWeight: '600' 
+    color: '#3b82f6', 
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   modalPlaceholder: { 
-    width: 60 
+    width: 80,
   },
   modalContent: { 
-    padding: 20 
+    padding: 24,
   },
 
   // Form inputs
   inputGroup: { 
-    marginBottom: 20 
+    marginBottom: 24,
   },
   inputLabel: { 
     fontSize: 16, 
-    fontWeight: '600', 
-    color: '#111827', 
-    marginBottom: 8 
+    fontWeight: '700', 
+    color: '#ffffff', 
+    marginBottom: 12,
+    letterSpacing: 0.3,
   },
   bidInput: { 
     borderWidth: 2, 
-    borderColor: '#e5e7eb', 
-    borderRadius: 8, 
-    paddingHorizontal: 16, 
-    paddingVertical: 12, 
+    borderColor: '#3a3a3a', 
+    borderRadius: 16, 
+    paddingHorizontal: 20, 
+    paddingVertical: 16, 
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   inputHint: { 
     fontSize: 12, 
-    color: '#6b7280', 
-    marginTop: 4 
+    color: '#9ca3af', 
+    marginTop: 8,
+    letterSpacing: 0.2,
   },
   locationButton: { 
     borderWidth: 2, 
-    borderColor: '#e5e7eb', 
-    borderRadius: 8, 
-    padding: 16,
-    backgroundColor: '#f9fafb',
+    borderColor: '#3a3a3a', 
+    borderRadius: 16, 
+    padding: 20,
+    backgroundColor: '#2a2a2a',
   },
   locationButtonText: { 
     fontSize: 14, 
-    color: '#111827', 
-    marginBottom: 4 
+    color: '#ffffff', 
+    marginBottom: 6,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   changeLocationText: { 
     fontSize: 12, 
-    color: '#2563eb', 
-    fontStyle: 'italic' 
+    color: '#3b82f6', 
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
   },
   submitButton: { 
-    backgroundColor: '#2563eb', 
+    backgroundColor: '#3b82f6', 
     paddingVertical: 16, 
-    borderRadius: 8, 
+    borderRadius: 16, 
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 24,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   submitButtonText: { 
-    color: '#fff', 
+    color: '#ffffff', 
     fontSize: 16, 
-    fontWeight: '700' 
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   buttonDisabled: { 
-    opacity: 0.6 
+    opacity: 0.6,
   },
   showBookingButton: {
-    backgroundColor: '#10b981',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   showBookingButtonText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
 });
