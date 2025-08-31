@@ -248,7 +248,7 @@ npx expo run:android
 ## 📝 Development Notes
 
 ### Network Configuration
-- **UoM WiFi**: Use Supabase direct connection + VS Code port forwarding
+- **Public WiFi**: Use Supabase direct connection + VS Code port forwarding
 - **Personal Hotspot**: Use AWS pooler + local IP configuration
 
 ### Database Schema
