@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { router } from 'expo-router';
 import { User, Car, ArrowLeft } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '@/constants/Colors';
 import { Spacing, Typography } from '@/constants/Spacing';
 
@@ -10,74 +11,112 @@ export default function RoleSelectionScreen() {
     if (role === 'passenger') {
       router.push('/(auth)/register');
     } else {
-      router.push('/(auth)/driver-register');
+      router.push('/(auth)/register');
     }
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#0F172A', '#1E293B', '#334155']}
+      style={styles.container}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.neutral[900]} />
+          <View style={styles.backButtonWrapper}>
+            <ArrowLeft size={20} color={Colors.white} />
+          </View>
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Join as</Text>
-        <Text style={styles.subtitle}>Choose how you want to use BidNGo</Text>
+        {/* Logo Section */}
+        <View style={styles.logoContainer}>
+          <View style={styles.logoWrapper}>
+            <Image
+              source={require('./Logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
 
-        <View style={styles.roleCards}>
+        {/* Title Section */}
+        <View style={styles.titleSection}>
+          <Text style={styles.title}>Choose Your Role</Text>
+          <View style={styles.glowLine} />
+          <Text style={styles.subtitle}>How do you want to use BidNGo?</Text>
+        </View>
+
+        {/* Role Cards Side by Side */}
+        <View style={styles.roleCardsContainer}>
           <TouchableOpacity 
             style={styles.roleCard} 
             onPress={() => handleRoleSelection('passenger')}
           >
-            <View style={styles.roleIcon}>
-              <User size={32} color={Colors.primary[600]} />
-            </View>
-            <Text style={styles.roleTitle}>Passenger</Text>
-            <Text style={styles.roleDescription}>
-              Find rides, place bids on trips, and travel with verified drivers
-            </Text>
-            <View style={styles.roleFeatures}>
-              <Text style={styles.feature}>• Search available trips</Text>
-              <Text style={styles.feature}>• Bid on rides</Text>
-              <Text style={styles.feature}>• Instant booking</Text>
-              <Text style={styles.feature}>• Rate your experience</Text>
-            </View>
+            <LinearGradient
+              colors={['rgba(59, 130, 246, 0.1)', 'rgba(37, 99, 235, 0.05)']}
+              style={styles.cardGradient}
+            >
+              <View style={styles.roleIconContainer}>
+                <View style={[styles.roleIcon, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
+                  <User size={28} color={Colors.primary[400]} />
+                </View>
+              </View>
+              <Text style={styles.roleTitle}>Passenger</Text>
+              <Text style={styles.roleDescription}>
+                Find rides and travel with verified drivers
+              </Text>
+              <View style={styles.roleFeatures}>
+                <Text style={styles.feature}>• Search trips</Text>
+                <Text style={styles.feature}>• Place bids</Text>
+                <Text style={styles.feature}>• Instant booking</Text>
+                <Text style={styles.feature}>• Rate experience</Text>
+              </View>
+              <View style={styles.cardBottomGlow} />
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.roleCard} 
             onPress={() => handleRoleSelection('driver')}
           >
-            <View style={styles.roleIcon}>
-              <Car size={32} color={Colors.secondary[600]} />
-            </View>
-            <Text style={styles.roleTitle}>Driver</Text>
-            <Text style={styles.roleDescription}>
-              Create trips, receive bids from passengers, and earn money driving
-            </Text>
-            <View style={styles.roleFeatures}>
-              <Text style={styles.feature}>• Create trip offers</Text>
-              <Text style={styles.feature}>• Receive passenger bids</Text>
-              <Text style={styles.feature}>• Flexible scheduling</Text>
-              <Text style={styles.feature}>• Earn extra income</Text>
-            </View>
+            <LinearGradient
+              colors={['rgba(6, 182, 212, 0.1)', 'rgba(14, 116, 144, 0.05)']}
+              style={styles.cardGradient}
+            >
+              <View style={styles.roleIconContainer}>
+                <View style={[styles.roleIcon, { backgroundColor: 'rgba(6, 182, 212, 0.2)' }]}>
+                  <Car size={28} color={Colors.secondary[400]} />
+                </View>
+              </View>
+              <Text style={styles.roleTitle}>Driver</Text>
+              <Text style={styles.roleDescription}>
+                Create trips and earn money driving
+              </Text>
+              <View style={styles.roleFeatures}>
+                <Text style={styles.feature}>• Create trips</Text>
+                <Text style={styles.feature}>• Receive bids</Text>
+                <Text style={styles.feature}>• Flexible schedule</Text>
+                <Text style={styles.feature}>• Earn income</Text>
+              </View>
+              <View style={styles.cardBottomGlow} />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.note}>
-          Note: Driver accounts require document verification before you can create trips
-        </Text>
+        <View style={styles.noteContainer}>
+          <Text style={styles.note}>
+            Driver accounts require document verification
+          </Text>
+        </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral[50],
   },
   header: {
     paddingHorizontal: Spacing.xl,
@@ -85,81 +124,184 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
   },
   backButton: {
-    padding: Spacing.xs,
     alignSelf: 'flex-start',
+  },
+  backButtonWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(51, 65, 85, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.neutral[700],
   },
   content: {
     flex: 1,
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  logoWrapper: {
+    width: 120,
+    height: 120,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary[500],
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+  },
+  titleSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
   },
   title: {
     fontSize: Typography.sizes['3xl'],
     fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
+    color: Colors.white,
     textAlign: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
+    textShadowColor: Colors.primary[600],
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  glowLine: {
+    width: 100,
+    height: 2,
+    backgroundColor: Colors.primary[500],
+    marginBottom: Spacing.md,
+    shadowColor: Colors.primary[500],
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   subtitle: {
     fontSize: Typography.sizes.lg,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+    color: Colors.neutral[300],
     textAlign: 'center',
-    marginBottom: Spacing.xxxl,
   },
-  roleCards: {
-    gap: Spacing.xl,
+  roleCardsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xs,
     marginBottom: Spacing.xl,
+    gap: Spacing.sm,
   },
   roleCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: Spacing.xl,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    flex: 1,
+    maxWidth: '48%',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.neutral[700],
+    shadowColor: Colors.primary[600],
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 2,
-    borderColor: Colors.neutral[100],
+    elevation: 6,
   },
-  roleIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.primary[50],
-    justifyContent: 'center',
+  cardGradient: {
+    flex: 1,
+    borderRadius: 12,
+    padding: Spacing.md,
+    position: 'relative',
+    overflow: 'hidden',
+    minHeight: 180,
+  },
+  roleIconContainer: {
     alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: Spacing.md,
-  },
-  roleTitle: {
-    fontSize: Typography.sizes.xl,
-    fontFamily: 'Inter-Bold',
-    color: Colors.neutral[900],
-    textAlign: 'center',
     marginBottom: Spacing.sm,
   },
-  roleDescription: {
-    fontSize: Typography.sizes.base,
-    fontFamily: 'Inter-Regular',
-    color: Colors.neutral[600],
+  roleIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary[500],
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  roleTitle: {
+    fontSize: Typography.sizes.lg,
+    fontFamily: 'Inter-Bold',
+    color: Colors.white,
     textAlign: 'center',
-    marginBottom: Spacing.lg,
-    lineHeight: 24,
+    marginBottom: Spacing.xs,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  roleDescription: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: 'Inter-Regular',
+    color: Colors.neutral[300],
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+    lineHeight: 16,
   },
   roleFeatures: {
-    gap: Spacing.xs,
+    gap: 2,
   },
   feature: {
-    fontSize: Typography.sizes.sm,
+    fontSize: 10,
     fontFamily: 'Inter-Regular',
-    color: Colors.neutral[700],
+    color: Colors.neutral[400],
+    textAlign: 'center',
+  },
+  cardBottomGlow: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: Colors.primary[500],
+    opacity: 0.6,
+    shadowColor: Colors.primary[500],
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  noteContainer: {
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
   },
   note: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     fontFamily: 'Inter-Regular',
     color: Colors.neutral[500],
     textAlign: 'center',
     fontStyle: 'italic',
+    lineHeight: 16,
   },
 });
